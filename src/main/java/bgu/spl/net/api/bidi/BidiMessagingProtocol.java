@@ -6,6 +6,10 @@ public interface BidiMessagingProtocol<T>  {
      **/
     void start(int connectionId, Connections<T> connections);
 
+    /**
+     * Processes a given message, responses sent via 'send' method of Connections object.
+     * @param message
+     */
     void process(T message);
 
     /**

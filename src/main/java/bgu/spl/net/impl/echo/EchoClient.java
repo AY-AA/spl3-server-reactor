@@ -11,6 +11,15 @@ public class EchoClient {
 
     public static void main(String[] args) throws IOException {
 
+        //TODO : remove!!
+        // --------------------------------------------------------------
+        // run on terminal : nc -l 7777
+        args = new String[] {"127.0.0.1","Hello World"};
+        // --------------------------------------------------------------
+
+
+
+
         if (args.length == 0) {
             args = new String[]{"localhost", "hello"};
         }
