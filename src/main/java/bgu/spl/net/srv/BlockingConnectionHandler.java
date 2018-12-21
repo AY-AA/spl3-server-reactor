@@ -35,8 +35,14 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
-                    // TODO : figure out how to fix it, new interface returns nothing
+                    // TODO : figure out how to fix it, new interface returns nothing,
+                    //  BidiMsgProtocol sends msgs by itself using Connections send method!,
+                    //  So we need only "protocol.process(nextMessage);"
+                    //  but I cant find the initiation of this protocol using supplier.get lambda like Adler did in page 55 example..
+                    //  
                     T response = protocol.process(nextMessage);
+
+
                     if (response != null) {
                         out.write(encdec.encode(response));
                         out.flush();
