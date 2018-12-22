@@ -39,22 +39,20 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
                     //  BidiMsgProtocol sends msgs by itself using Connections send method!,
                     //  So we need only "protocol.process(nextMessage);"
                     //  but I cant find the initiation of this protocol using supplier.get lambda like Adler did in page 55 example..
-                    //
-                    T response = protocol.process(nextMessage);
+//                    T response = protocol.process(nextMessage);
+                    protocol.process(nextMessage);
 
-
-                    if (response != null) {
-                        out.write(encdec.encode(response));
-                        out.flush();
+//                    if (response != null) {
+//                        out.write(encdec.encode(response));
+//                        out.flush();
                     }
                 }
-            }
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
+
 
     @Override
     public void close() throws IOException {
