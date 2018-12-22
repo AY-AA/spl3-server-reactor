@@ -10,5 +10,4 @@ public interface ConnectionHandler<T> extends Closeable{
      * @param msg
      */
     void send(T msg) ;
-
 }

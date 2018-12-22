@@ -1,9 +1,7 @@
-package bgu.spl.net.srv.bidi;
+package bgu.spl.net.api.bidi;
 
-import bgu.spl.net.api.bidi.Connections;
-
+import bgu.spl.net.srv.bidi.ConnectionHandler;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Connections maps an unique ID for each client connected to the server.
@@ -12,8 +10,15 @@ import java.util.List;
 public class ConnectionsImpl<T> implements Connections<T> {
 
 
-    // TODO : change data structure ?
-    HashMap<Integer,ConnectionHandler> _connectionHandlers;
+    // each Integer represents an unique client's ID and its value is the client's connection handler
+    private HashMap<Integer, ConnectionHandler> _connectionHandlers;
+
+
+    public ConnectionsImpl()
+    {
+        //load _connectionsHAndler
+        _connectionHandlers = new HashMap<>();
+    }
 
     // TODO : add support for disconnected users such as msg delivery even though they're logged off
 
@@ -38,4 +43,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void disconnect(int connectionId) {
         _connectionHandlers.remove(connectionId);
     }
+
+
+
+
+
+
 }
