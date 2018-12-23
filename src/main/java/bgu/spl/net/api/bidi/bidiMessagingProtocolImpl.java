@@ -1,23 +1,21 @@
 package bgu.spl.net.api.bidi;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
-public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessageResult> {
+public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
 
     private int _id;
-    private Connections<bidiMessages.bidiMessageResult> _connections;
+    private Connections<bidiMessages.bidiMessage> _connections;
     private boolean _shouldTerminate;
 
     @Override
-    public void start(int connectionId, Connections<bidiMessages.bidiMessageResult> connections) {
+    public void start(int connectionId, Connections<bidiMessages.bidiMessage> connections) {
         _id = connectionId;
         _connections = connections;
     }
 
     @Override
-    public void process(bidiMessages.bidiMessageResult message) {
+    public void process(bidiMessages.bidiMessage message) {
         if (message.getRelevantInfo() == null)
             return;
         OpcodeCommand opcodeCommand = message.getOpcode();
@@ -42,24 +40,24 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         return _shouldTerminate;
     }
 
-    private void register(bidiMessages.bidiMessageResult message) {
+    private void register(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
         // TODO: implement
     }
 
-    private void login(bidiMessages.bidiMessageResult message) {
+    private void login(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
         // TODO: implement
     }
 
-    private void logout(bidiMessages.bidiMessageResult message) {
+    private void logout(bidiMessages.bidiMessage message) {
         _connections.disconnect(_id);
         _shouldTerminate = true;
     }
 
-    private void follow(bidiMessages.bidiMessageResult message) {
+    private void follow(bidiMessages.bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         int followUnfollowInt = Integer.parseInt(info.get(0));
         int numOfUsers = Integer.parseInt(info.get(1));
@@ -76,7 +74,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         }
     }
 
-    private void post(bidiMessages.bidiMessageResult message) {
+    private void post(bidiMessages.bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);
         if (info.size() > 1) {        // has more users to send
@@ -89,25 +87,25 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         // TODO : implement msg sending
     }
 
-    private void pm(bidiMessages.bidiMessageResult message) {
+    private void pm(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String content = message.getRelevantInfo().get(1);
         // TODO : implement
 
     }
 
-    private void userlist(bidiMessages.bidiMessageResult message) {
+    private void userlist(bidiMessages.bidiMessage message) {
         // TODO : implement
 
     }
 
-    private void stat(bidiMessages.bidiMessageResult message) {
+    private void stat(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         // TODO : implement
 
     }
 
-    private void notification(bidiMessages.bidiMessageResult message) {
+    private void notification(bidiMessages.bidiMessage message) {
         String pmPublic = message.getRelevantInfo().get(0);
         String username = message.getRelevantInfo().get(1);
         String content = message.getRelevantInfo().get(2);
@@ -115,7 +113,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
 
     }
 
-    private void ack(bidiMessages.bidiMessageResult message) {
+    private void ack(bidiMessages.bidiMessage message) {
         StringBuilder stringBuilder = new StringBuilder();
         List<String> stringList = message.getRelevantInfo();
 
@@ -128,7 +126,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
 
     }
 
-    private void error(bidiMessages.bidiMessageResult message) {
+    private void error(bidiMessages.bidiMessage message) {
         String result = message.getRelevantInfo().get(0);
         // TODO : implement
 

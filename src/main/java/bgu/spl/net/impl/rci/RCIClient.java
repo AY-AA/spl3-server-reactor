@@ -1,5 +1,8 @@
 package bgu.spl.net.impl.rci;
 
+import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
+import bgu.spl.net.api.bidi.bidiMessages;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -9,27 +12,27 @@ import java.net.Socket;
 
 public class RCIClient implements Closeable {
 
-    private final ObjectEncoderDecoder encdec;
+    private final bidiMessageEncoderDecoder encdec;
     private final Socket sock;
     private final BufferedInputStream in;
     private final BufferedOutputStream out;
 
     public RCIClient(String host, int port) throws IOException {
         sock = new Socket(host, port);
-        encdec = new ObjectEncoderDecoder();
+        encdec = new bidiMessageEncoderDecoder();
         in = new BufferedInputStream(sock.getInputStream());
         out = new BufferedOutputStream(sock.getOutputStream());
     }
 
-    public void send(Command<?> cmd) throws IOException {
+    public void send(bidiMessages.bidiMessage cmd) throws IOException {
         out.write(encdec.encode(cmd));
         out.flush();
     }
 
-    public Serializable receive() throws IOException {
+    public bidiMessages.bidiMessage receive() throws IOException {
         int read;
         while ((read = in.read()) >= 0) {
-            Serializable msg = encdec.decodeNextByte((byte) read);
+            bidiMessages.bidiMessage msg = encdec.decodeNextByte((byte) read);
             if (msg != null) {
                 return msg;
             }

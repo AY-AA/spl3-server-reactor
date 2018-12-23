@@ -6,7 +6,7 @@ import java.util.HashMap;
 /**
  * Connections maps an unique ID for each client connected to the server.
  */
-public class ConnectionsImpl implements Connections<bidiMessages.bidiMessageResult> {
+public class ConnectionsImpl implements Connections<bidiMessages.bidiMessage> {
 
 
     // each Integer represents an unique client's ID and its value is the client's connection handler
@@ -22,7 +22,7 @@ public class ConnectionsImpl implements Connections<bidiMessages.bidiMessageResu
     // TODO : add support for disconnected users such as msg delivery even though they're logged off
 
     @Override
-    public boolean send(int connectionId, bidiMessages.bidiMessageResult msg)
+    public boolean send(int connectionId, bidiMessages.bidiMessage msg)
     {
         ConnectionHandler connectionHandler = _connectionHandlers.get(connectionId);
         if (connectionHandler != null && msg != null) {
@@ -33,7 +33,7 @@ public class ConnectionsImpl implements Connections<bidiMessages.bidiMessageResu
     }
 
     @Override
-    public void broadcast(bidiMessages.bidiMessageResult msg) {
+    public void broadcast(bidiMessages.bidiMessage msg) {
         for (ConnectionHandler connectionHandler : _connectionHandlers.values())
             connectionHandler.send(msg.getMsgToSend());
     }

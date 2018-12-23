@@ -3,16 +3,16 @@ package bgu.spl.net.api.bidi;
 import bgu.spl.net.api.MessageEncoderDecoder;
 import java.nio.ByteBuffer;
 
-public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMessages.bidiMessageResult> {
+public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMessages.bidiMessage> {
 
-    private bidiMessages.bidiMessageResult _result = null;
+    private bidiMessages.bidiMessage _result = null;
     private bidiMessages _message = null;
     private final ByteBuffer _opcode = ByteBuffer.allocate(2);
 
     // --------------------- DECODER --------------------- //
 
     @Override
-    public bidiMessages.bidiMessageResult decodeNextByte(byte nextByte) {
+    public bidiMessages.bidiMessage decodeNextByte(byte nextByte) {
         if (_message == null) { //indicates that we are still reading the opcode
             _opcode.put(nextByte);
             if (!_opcode.hasRemaining()) { //we read 2 bytes and therefore can take the command type
@@ -21,7 +21,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
                 if (!hasMoreData) {
                     cleanAll();
                     String res = _message.decodeNextByte(nextByte);
-                    _result = new bidiMessages.bidiMessageResult(_message,res);
+                    _result = new bidiMessages.bidiMessage(_message,res);
                 }
             }
         }
@@ -29,7 +29,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             String res =_message.decodeNextByte(nextByte);
             if (res != null) {
                 cleanAll();
-                _result = new bidiMessages.bidiMessageResult(_message,res);
+                _result = new bidiMessages.bidiMessage(_message,res);
             }
         }
         return _result;
@@ -71,19 +71,23 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
     // --------------------- ENCODE SECTION --------------------- //
 
     @Override
-    public byte[] encode(bidiMessages.bidiMessageResult res) {
-        /*int indexOfSpace = str.indexOf(" ");
+    public byte[] encode(bidiMessages.bidiMessage res) {
+        String cmdAndMsg = res.getString();
+
+
+        int indexOfSpace = cmdAndMsg.indexOf(" ");
         String cmdString = null;
         if (indexOfSpace != -1) {
-            cmdString = str.substring(0, indexOfSpace);
+            cmdString = cmdAndMsg.substring(0, indexOfSpace);
         }
         else
-            cmdString = str;
+            cmdString = cmdAndMsg;
         parseCommand(cmdString);
-        String msg = str.substring(0, cmdString.length());*/
 
-        parseCommand(res.getCmdType());
-        String msg = res.getString();
+        String msg = cmdAndMsg.substring(0, cmdString.length());
+
+//        res = new bidiMessages.bidiMessage(_message,msg);
+
         return _message.encode(msg);
 
     }

@@ -14,7 +14,7 @@ public class PublishNewsCommand implements Command<NewsFeed> {
     }
  
     @Override
-    public Serializable execute(NewsFeed feed) {
+    public String execute(NewsFeed feed) {
         feed.publish(channel, news);
         return "OK";
     }

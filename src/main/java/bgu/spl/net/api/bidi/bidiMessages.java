@@ -685,22 +685,22 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
 
 
-    public static class bidiMessageResult
+    public static class bidiMessage
     {
         private bidiMessages _message;
-        private OpcodeCommand _cmdType;
+        private OpcodeCommand _cmdType = OpcodeCommand.NULL;
         private List<String> _info;
         private String _encodeOrDecode;
         private String _msgToSend;
 
-        public bidiMessageResult (bidiMessages message,String result){
+        public bidiMessage(bidiMessages message, String result){
             _message = message;
             _cmdType = _message.getOpcode();
             _encodeOrDecode = result;
             parseResult();
         }
 
-        public bidiMessageResult (String toEncode)
+        public bidiMessage(String toEncode)
         {
             _encodeOrDecode = toEncode;
         }

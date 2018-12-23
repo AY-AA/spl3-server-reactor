@@ -1,5 +1,6 @@
 package bgu.spl.net.impl.newsfeed;
 
+import bgu.spl.net.api.bidi.bidiMessages;
 import bgu.spl.net.impl.rci.RCIClient;
 
 public class NewsFeedClientMain {
@@ -17,21 +18,18 @@ public class NewsFeedClientMain {
 
     private static void runFirstClient(String host) throws Exception {
         try (RCIClient c = new RCIClient(host, 7777)) {
-            c.send(new PublishNewsCommand(
-                    "jobs",
+            c.send(new bidiMessages.bidiMessage(
                     "POST System Programmer, knowledge in C++, Java and Python required. call 0x134693F"));
             System.out.println("msg1 sent");
             c.receive(); //ok
 
-            c.send(new PublishNewsCommand(
-                    "headlines",
+            c.send(new bidiMessages.bidiMessage(
                     "POST new SPL assignment is out soon!!"));
             System.out.println("msg2 sent");
 
             c.receive(); //ok
 
-            c.send(new PublishNewsCommand(
-                    "headlines",
+            c.send(new bidiMessages.bidiMessage(
                     "POST THE CAKE IS A LIE!"));
             System.out.println("msg3 sent");
 
@@ -42,14 +40,14 @@ public class NewsFeedClientMain {
 
     private static void runSecondClient(String host) throws Exception {
         try (RCIClient c = new RCIClient(host, 7777)) {
-            c.send(new FetchNewsCommand("jobs"));
+            c.send(new bidiMessages.bidiMessage("jobs"));
             System.out.println("second client received: " + c.receive());
         }
     }
 
     private static void runThirdClient(String host) throws Exception {
         try (RCIClient c = new RCIClient(host, 7777)) {
-            c.send(new FetchNewsCommand("headlines"));
+            c.send(new bidiMessages.bidiMessage("headlines"));
             System.out.println("third client received: " + c.receive());
         }
     }
