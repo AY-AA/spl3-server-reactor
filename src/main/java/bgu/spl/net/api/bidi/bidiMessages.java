@@ -13,12 +13,16 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     protected final String ENCODING = "utf-8";
     protected final byte _delimiter = '\0';
+    protected final String _strDelimeter = "\0";
+    protected final byte[] _bytesDelimiter = _strDelimeter.getBytes();
 
     protected int _numOfDelimiters;
     protected Vector<Byte> _byteVector = new Vector<>();
 
     protected byte[] _bytes;
-    protected String _string;
+    protected String _string = "";
+
+    protected boolean _firstDelimiter = true;
 
 
     public abstract OpcodeCommand getOpcode();
@@ -69,13 +73,13 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         byte[] bytes = new byte[_byteVector.size()];
         int i = 0;
         for (Byte currByte : _byteVector) {
-            bytes[i] = currByte;
+            bytes[i] = currByte.byteValue();
             i++;
         }
         _byteVector.clear();
         String str = null;
         try {
-            str = new String(bytes, 0, bytes.length, ENCODING);
+            str = new String(bytes, 0, bytes.length , ENCODING);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -91,6 +95,9 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     }
 
+
+
+
     public static class RegisterLogin extends bidiMessages {
 
         private short _opcode;
@@ -101,24 +108,15 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         public RegisterLogin(short opcode) {
             _opcode = opcode;
             _numOfDelimiters = 2;
-            String tmp ;
-            if (opcode == 1)
-                tmp = "LOGIN";
-            else
-                tmp = "REGISTER";
-            byte[] tmpBytes = tmp.getBytes();
-            addBytesToVector(tmpBytes);
-
-            _string = bytesToString();
         }
 
         @Override
         public byte[] encode(String message) {
-            message.trim();
+            message = message.trim();
             _username = message.substring(0, message.indexOf(" "));
             _password = message.substring(message.indexOf(" ") + 1);
 
-            _string = _username + '\0' + _password + '\0';
+            _string = _username + _strDelimeter + _password + _strDelimeter;
 
             addBytesToVector(shortToBytes(_opcode));
             addBytesToVector(_string.getBytes());
@@ -134,7 +132,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                 String str = bytesToString();
                 if (_numOfDelimiters == 2) {
                     _username = str;
-                    _string += " " + str;
+                    _string += str;
                 }
                 else {
                     _password = str;
@@ -166,12 +164,11 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         @Override
         public String decodeNextByte(byte nextByte) {
-            return _string;
+            return "LOGOUT";
         }
 
         @Override
         public byte[] encode(String message) {
-            message.trim();
             return shortToBytes(_opcode);
         }
 
@@ -183,7 +180,6 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     public static class Follow extends bidiMessages {
 
-        private byte _followUnfollow;
         private boolean _foundNumOfUsers, _followUnfollowFound = false;
         private int _counter = 0; // counts number of times reached here to know whether numOfUsers has been reached
         private final ByteBuffer _numOfUsers = ByteBuffer.allocate(2);
@@ -192,18 +188,15 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         Follow()
         {
-            byte[] tmpBytes = "FOLLOW".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
+
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
-            if (!_followUnfollowFound) {
-                updateFollowUnfollow(nextByte);
-            }
             _counter ++;
-            if (!_foundNumOfUsers && _counter > 2) {
+            if (!_followUnfollowFound)
+                updateFollowUnfollow(nextByte);
+            else if (!_foundNumOfUsers && _counter > 1) {
                 findNumOfUsers(nextByte);
                 return null;
             }
@@ -216,10 +209,10 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         }
 
         private void updateFollowUnfollow(byte nextByte) {
-            _followUnfollow = nextByte;
             _followUnfollowFound = true;
             _byteVector.add(nextByte);
-            _string += " " + bytesToString();
+            _string += nextByte;
+            _byteVector.clear();
         }
 
         private void findNumOfUsers(byte nextByte) {
@@ -229,17 +222,15 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                 short numOfUsers = bytesToShort(_numOfUsers.array());
                 _numOfDelimiters = numOfUsers;
                 _foundNumOfUsers = true;
-                String str = bytesToString();
-                _string += " " + str;
+                _string += " " + numOfUsers;
                 _byteVector.clear();
             }
         }
 
-
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
 
@@ -254,13 +245,16 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             short numOfUsersShort = Short.parseShort(numOfUsers);
             addBytesToVector(shortToBytes(numOfUsersShort));
 
+            message = message.substring(numOfUsers.length());
+            message = message.trim();
+
             for (int i = 0 ; i < numOfUsersShort - 1 ; i++){
-                message = message.substring(message.indexOf(" ") + 1);
-                String currString = message.substring(0,message.indexOf(" ")) + _delimiter;
+                String currString = message.substring(0,message.indexOf(" ")) + _strDelimeter;
                 byte[] CurrBytes = currString.getBytes();
                 addBytesToVector (CurrBytes);
+                message = message.substring(message.indexOf(" ") + 1);
             }
-            message = message.substring(message.indexOf(" ") + 1) + _delimiter;
+            message = message + _strDelimeter;
             addBytesToVector(message.getBytes());
 
 
@@ -281,16 +275,18 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         Post()
         {
             _numOfDelimiters = 1;
-            byte[] tmpBytes = "POST".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
             if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string += " " + str;
+                if (_firstDelimiter ){
+                    _string += str;
+                    _firstDelimiter = false;
+                }
+                else
+                    _string += " " + str;
             }
             return super.decodeNextByte(nextByte);
         }
@@ -298,10 +294,10 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
             _string = message;
             addBytesToVector(shortToBytes(_opcode));
-            addBytesToVector((message + _delimiter).getBytes());
+            addBytesToVector((message + _strDelimeter).getBytes());
 
             _bytes = new byte[_byteVector.size()];
             addBytes(_bytes,_byteVector);
@@ -316,27 +312,23 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     public static class PM extends bidiMessages {
 
-        private String _username;
-        private String _content;
         private final short _opcode = 6;
 
         PM()
         {
             _numOfDelimiters = 2;
-            byte[] tmpBytes = "PM".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
             if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string += " " + str;
-                if (_numOfDelimiters == 2)
-                    _username = str;
-                else
-                    _content = str;
+                if (!_firstDelimiter)
+                    _string += " " + str;
+                else{
+                    _string += str;
+                    _firstDelimiter = false;
+                }
             }
             return super.decodeNextByte(nextByte);
         }
@@ -344,15 +336,15 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
 
             String receiver = message.substring(0,message.indexOf(" "));
-            addBytesToVector((receiver + _delimiter).getBytes());
+            addBytesToVector((receiver + _strDelimeter).getBytes());
 
             String content = message.substring(message.indexOf(" ") +1);
-            addBytesToVector((content + _delimiter).getBytes());
+            addBytesToVector((content + _strDelimeter).getBytes());
 
             _bytes = new byte[_byteVector.size()];
             addBytes(_bytes,_byteVector);
@@ -369,14 +361,11 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private final short _opcode = 7;
 
         Userlist(){
-            byte[] tmpBytes = "USERLIST".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
-            return _string;
+            return "USERLIST";
         }
 
         @Override
@@ -394,20 +383,15 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     public static class Stat extends bidiMessages {
 
         private final short _opcode = 8;
-        private String _username;
         public Stat() {
             _numOfDelimiters =1 ;
-            byte[] tmpBytes = "STAT".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
             if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string += " " + str;
-                _username = str;
+                _string += str;
             }
             return super.decodeNextByte(nextByte);
         }
@@ -415,12 +399,10 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
-
-            String username = message.substring(0,message.indexOf(" "));
-            addBytesToVector((username + _delimiter).getBytes());
+            addBytesToVector((message + _strDelimeter).getBytes());
 
             _bytes = new byte[_byteVector.size()];
             addBytes(_bytes,_byteVector);
@@ -435,56 +417,54 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     public static class Notification extends bidiMessages {
 
-        private byte _pmPublic;
         private boolean _pmPublicFound = false;
-        private String _username, _content;
         private final short _opcode = 9;
 
         public Notification() {
             _numOfDelimiters = 2;
-            byte[] tmpBytes = "NOTIFICATION".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
 
         @Override
         public String decodeNextByte(byte nextByte) {
             if (!_pmPublicFound) {
                 updatePmPublic(nextByte);
+                return null;
             }
             else if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string = _string + " " + str;
-                if (_numOfDelimiters == 2)
-                    _username = str;
-                else
-                    _content = str;
+                _string += " " + str;
+                _byteVector.clear();
             }
             return super.decodeNextByte(nextByte);
         }
 
         private void updatePmPublic(byte nextByte) {
-            _pmPublic = nextByte;
             _pmPublicFound = true;
-            _byteVector.add(nextByte);
-            _string += " " + bytesToString();
+            if (nextByte == 0)
+                _string += "PM";
+            else
+                _string += "POST";
+            _byteVector.clear();
         }
 
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
 
             String pmPublic = message.substring(0,message.indexOf(" "));
-            addBytesToVector((pmPublic).getBytes());
+            if (pmPublic.equals("PM"))
+                _byteVector.add((byte)0);
+            else
+                _byteVector.add((byte)1);
 
             message = message.substring(message.indexOf(" ") + 1);
-            String username = message.substring(0,message.indexOf(" "));
-            addBytesToVector((username + _delimiter).getBytes());
+            String username = message.substring(0,message.indexOf(" ")) + _strDelimeter;
+            addBytesToVector((username).getBytes());
 
-            String content = message.substring(message.indexOf(" ") + 1) + _delimiter;
+            String content = message.substring(message.indexOf(" ") + 1) + _strDelimeter;
             addBytesToVector(content.getBytes());
 
             _bytes = new byte[_byteVector.size()];
@@ -583,16 +563,16 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         @Override
         public byte[] encode(String message) {
             _byteVector.clear();
-            message.trim();
+            message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
+            if (!message.isEmpty()) {
+                short opcode = Short.parseShort(message.substring(0, message.indexOf(" ")));
+                _caseType = opcode;
+                addBytesToVector(shortToBytes(opcode));
 
-            short opcode = Short.parseShort(message.substring(0,message.indexOf(" ")));
-            _caseType = opcode;
-            addBytesToVector(shortToBytes(opcode));
-
-            encodeByCase(message);
-
+                encodeByCase(message);
+            }
             _bytes = new byte[_byteVector.size()];
             addBytes(_bytes,_byteVector);
             return _bytes;
@@ -608,10 +588,10 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                     addBytesToVector(shortToBytes(numOfUsers));
                     for (int i = 0; i < numOfUsers -1 ; i++) {
                         message = message.substring(message.indexOf(" ") + 1);
-                        String currUsername = message.substring(0,message.indexOf(" ")) + _delimiter;
+                        String currUsername = message.substring(0,message.indexOf(" ")) + _strDelimeter;
                         addBytesToVector(currUsername.getBytes());
                     }
-                    String lastUsername = message.substring(message.indexOf(" ") + 1) + _delimiter;
+                    String lastUsername = message.substring(message.indexOf(" ") + 1) + _strDelimeter;
                     addBytesToVector(lastUsername.getBytes());
                     break;
                 }
@@ -652,9 +632,6 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         public Error()
         {
             _numOfDelimiters = 1;
-            byte[] tmpBytes = "ERROR".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
         }
         @Override
         public String decodeNextByte(byte nextByte) {
@@ -666,14 +643,29 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                 _byteVector.clear();
                 addBytesToVector(opcode.getBytes());
                 String str = bytesToString();
-                _string += " " + str;
+                _string += str;
             }
-            return super.decodeNextByte(nextByte);
+            if (_string.isEmpty())
+                return null;
+            return _string;
         }
 
         @Override
         public byte[] encode(String message) {
-            return shortToBytes(_opcode);
+            message = message.trim();
+            int i = 0;
+            short msgOpcode = 0;
+            for (OpcodeCommand opcodeCommand : OpcodeCommand.values()) {
+                if (opcodeCommand.toString().equals(message))
+                    msgOpcode = (short)i;
+                i ++ ;
+            }
+            _byteVector.clear();
+            addBytesToVector(shortToBytes(_opcode));
+            addBytesToVector(shortToBytes(msgOpcode));
+            byte[] ans = new byte[_byteVector.size()];
+            addBytes(ans,_byteVector);
+            return ans;
         }
 
         @Override
@@ -689,13 +681,12 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private bidiMessages _message;
         private OpcodeCommand _cmdType = OpcodeCommand.NULL;
         private List<String> _info;
-        private String _encodeOrDecode;
-        private String _msgToSend;
+        private String _encodeOrDecode, _msgToSend;
 
         public bidiMessage(bidiMessages message, String result){
             _message = message;
             _cmdType = _message.getOpcode();
-            _encodeOrDecode = result;
+            _msgToSend = _encodeOrDecode = result;
             parseResult();
         }
 
@@ -754,41 +745,40 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             _info.add(_encodeOrDecode);
             _msgToSend = _encodeOrDecode;
             while (tmp.contains("@"))
-                {
-                    tmp = tmp.substring(tmp.indexOf("@") + 1);
-                    int nextSpace = tmp.indexOf(" ");
-                    if (nextSpace != -1) {
-                        _info.add(tmp.substring(0, nextSpace));
-                    }
-                    else {
-                        _info.add(tmp);
-                    }
+            {
+                tmp = tmp.substring(tmp.indexOf("@") + 1);
+                int nextSpace = tmp.indexOf(" ");
+                if (nextSpace != -1) {
+                    _info.add(tmp.substring(0, nextSpace));
                 }
+                else {
+                    _info.add(tmp);
+                }
+            }
         }
 
         private void parsePM() {
-            _encodeOrDecode.trim();
+            _encodeOrDecode = _encodeOrDecode.trim();
             String username = _encodeOrDecode.substring(0, _encodeOrDecode.indexOf(" "));
             _info.add(username);
 
             String msg = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") + 1);
-            _msgToSend = msg;
+            _msgToSend = username + " " + msg;
             _info.add(msg);
         }
 
         private void parseStat() {
             _encodeOrDecode.trim();
-            String username = _encodeOrDecode.substring(0, _encodeOrDecode.indexOf(" "));
-            _info.add(username);
+            _info.add(_encodeOrDecode);
         }
 
         private void parseNotification() {
-            _encodeOrDecode.trim();
+            _encodeOrDecode = _encodeOrDecode.trim();
             String pmPublic = _encodeOrDecode.substring(0,_encodeOrDecode.indexOf(" "));
             _info.add(pmPublic);
 
             String tmp = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") +1);
-            String username = tmp.substring(0,_encodeOrDecode.indexOf(" "));
+            String username = tmp.substring(0,tmp.indexOf(" "));
             _info.add(username);
 
             String content = tmp.substring(tmp.indexOf(" ") +1);
@@ -834,7 +824,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         private void parseERROR() {
             _encodeOrDecode.trim();
-            _info.add(_encodeOrDecode.substring(0,1));
+            _info.add(_encodeOrDecode);
             _msgToSend = _encodeOrDecode;
         }
 

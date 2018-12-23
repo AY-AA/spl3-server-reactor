@@ -19,17 +19,17 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
                 boolean hasMoreData = parseCommand();
                 _opcode.clear();
                 if (!hasMoreData) {
-                    cleanAll();
                     String res = _message.decodeNextByte(nextByte);
                     _result = new bidiMessages.bidiMessage(_message,res);
+                    cleanAll();
                 }
             }
         }
         else {
             String res =_message.decodeNextByte(nextByte);
             if (res != null) {
-                cleanAll();
                 _result = new bidiMessages.bidiMessage(_message,res);
+                cleanAll();
             }
         }
         return _result;
@@ -50,7 +50,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             case NOTIFICATION:  { _message = new bidiMessages.Notification();          return true; }
             case ACK:           { _message = new bidiMessages.ACK();                   return true; }
             case ERROR:         { _message = new bidiMessages.Error();                 return true; }
-            default:            return false;
+            default:            return true;
         }
     }
 
@@ -70,7 +70,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
     @Override
     public byte[] encode(bidiMessages.bidiMessage res) {
         String cmdAndMsg = res.getString();
-
 
         int indexOfSpace = cmdAndMsg.indexOf(" ");
         String cmdString = null;

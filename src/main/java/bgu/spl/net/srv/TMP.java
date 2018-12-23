@@ -9,6 +9,7 @@ import javax.print.DocFlavor;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 
 public class TMP {
@@ -27,14 +28,25 @@ public class TMP {
 
 
         bidiMessageEncoderDecoder encoderDecoder = new bidiMessageEncoderDecoder();
-        byte[] xx = encoderDecoder.encode(new bidiMessages.bidiMessage("POST AAAAA"));
+        String del = "\0";
+        byte[] xx = encoderDecoder.encode(new bidiMessages.bidiMessage("ERROR LOGOUT"));
         bidiMessages.bidiMessage y = null;
         int i =0;
         while (y == null && i<xx.length){
             y = encoderDecoder.decodeNextByte(xx[i]);
             i++;
         }
+//        byte _delimiter = '\0';
+//        String aa = "\0";
+//        byte[] aaa = aa.getBytes();
+
         System.out.println(y.getMsgToSend());
+        List<String> a = y.getRelevantInfo();
+        for (String st : a)
+            System.out.println( st);
+//        System.out.println(_delimiter == aaa[0]);
+
+
 //
 //        System.out.println(Short.BYTES);
 
