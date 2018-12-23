@@ -9,13 +9,15 @@ import java.util.Vector;
 
 public class TMP {
     public static void main(String []args) throws Exception {
-        NewsFeedServerMain serverMain = new NewsFeedServerMain();
-        Thread t = new Thread(serverMain);
-        t.start();
-        Thread.currentThread().sleep(2000);
-//        NewsFeedServerMain.startServer(null);
-        NewsFeedClientMain.main(null);
+//        NewsFeedServerMain serverMain = new NewsFeedServerMain();
+//        Thread t = new Thread(serverMain);
+//        t.start();
+//        Thread.currentThread().sleep(2000);
+////        NewsFeedServerMain.startServer(null);
+//        NewsFeedClientMain.main(null);
 
+        byte _delimiter = '\0';
+        System.out.println(_delimiter);
 
     }
 }
