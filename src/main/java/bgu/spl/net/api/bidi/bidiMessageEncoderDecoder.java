@@ -84,7 +84,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
 
         parseCommand(res.getCmdType());
         String msg = res.getString();
-        _result = new bidiMessages.bidiMessageResult(_message,msg);
         return _message.encode(msg);
 
     }

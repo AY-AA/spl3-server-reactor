@@ -1,6 +1,7 @@
 package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
+import org.omg.CORBA.IMP_LIMIT;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -283,8 +284,6 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     public static class Post extends bidiMessages {
 
-        List<String> _usersToSend = new ArrayList<>();
-
         Post()
         {
             _numOfDelimiters = 1;
@@ -298,22 +297,8 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             if (nextByte == _delimiter){
                 String str = bytesToString();
                 _string += " " + str;
-                findAdditionalReceipters();
             }
             return super.decodeNextByte(nextByte);
-        }
-
-        private void findAdditionalReceipters() {
-            String tmp = _string;
-            while (tmp.contains("@"))
-            {
-                tmp = tmp.substring(tmp.indexOf("@") + 1);
-                int nextSpace = tmp.indexOf(" ");
-                if (nextSpace != -1)
-                    _usersToSend.add(tmp.substring(0, nextSpace));
-                else
-                    _usersToSend.add(tmp);
-            }
         }
 
         @Override
@@ -706,6 +691,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private OpcodeCommand _cmdType;
         private List<String> _info;
         private String _encodeOrDecode;
+        private String _msgToSend;
 
         public bidiMessageResult (bidiMessages message,String result){
             _message = message;
@@ -721,19 +707,136 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         private void parseResult() {
             // init info list
+            _info = new ArrayList<>();
             switch (_cmdType.toString()) {
                 case "REGISTER":        { parseRegisterLogin(); break;}
                 case "LOGIN":           { parseRegisterLogin(); break;}
-                case "LOGOUT":          { parseLogout();        break;}
                 case "FOLLOW":          { parseFollow();        break;}
                 case "POST":            { parsePost();          break;}
                 case "PM":              { parsePM();            break;}
-                case "USERLIST":        { parseUserlist();      break;}
                 case "STAT":            { parseStat();          break;}
                 case "NOTIFICATION":    { parseNotification();  break;}
                 case "ACK":             { parseACK();           break;}
                 case "ERROR":           { parseERROR();         break;}
             }
+        }
+
+        private void parseRegisterLogin() {
+            _encodeOrDecode.trim();
+            String username = _encodeOrDecode.substring(0,_encodeOrDecode.indexOf(" "));
+            String pw  = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") +1);
+            _info.add(username);
+            _info.add(pw);
+        }
+
+        private void parseFollow() {
+            _encodeOrDecode.trim();
+            String followUnfollow = _encodeOrDecode.substring(0,_encodeOrDecode.indexOf(" "));
+            _info.add(followUnfollow);
+
+            String tmp = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") +1);
+            String numOfUsers = tmp.substring(0,_encodeOrDecode.indexOf(" "));
+            _info.add(numOfUsers);
+
+            int numOfUsersInt = Integer.parseInt(numOfUsers);
+            for (int i = 0; i < numOfUsersInt - 1; i++) {
+                tmp = tmp.substring(_encodeOrDecode.indexOf(" ") +1);
+                String currUser = tmp.substring(0,_encodeOrDecode.indexOf(" "));
+                _info.add(currUser);
+            }
+
+            String lastUser = tmp.substring(_encodeOrDecode.indexOf(" ") +1);
+            _info.add(lastUser);
+        }
+
+        private void parsePost() {
+            _encodeOrDecode.trim();
+            String tmp = _encodeOrDecode;
+            _info.add(_encodeOrDecode);
+            _msgToSend = _encodeOrDecode;
+            while (tmp.contains("@"))
+                {
+                    tmp = tmp.substring(tmp.indexOf("@") + 1);
+                    int nextSpace = tmp.indexOf(" ");
+                    if (nextSpace != -1) {
+                        _info.add(tmp.substring(0, nextSpace));
+                    }
+                    else {
+                        _info.add(tmp);
+                    }
+                }
+        }
+
+        private void parsePM() {
+            _encodeOrDecode.trim();
+            String username = _encodeOrDecode.substring(0, _encodeOrDecode.indexOf(" "));
+            _info.add(username);
+
+            String msg = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") + 1);
+            _msgToSend = msg;
+            _info.add(msg);
+        }
+
+        private void parseStat() {
+            _encodeOrDecode.trim();
+            String username = _encodeOrDecode.substring(0, _encodeOrDecode.indexOf(" "));
+            _info.add(username);
+        }
+
+        private void parseNotification() {
+            _encodeOrDecode.trim();
+            String pmPublic = _encodeOrDecode.substring(0,_encodeOrDecode.indexOf(" "));
+            _info.add(pmPublic);
+
+            String tmp = _encodeOrDecode.substring(_encodeOrDecode.indexOf(" ") +1);
+            String username = tmp.substring(0,_encodeOrDecode.indexOf(" "));
+            _info.add(username);
+
+            String content = tmp.substring(tmp.indexOf(" ") +1);
+            _msgToSend = content;
+            _info.add(content);
+        }
+
+        private void parseACK() {
+            _encodeOrDecode.trim();
+            _msgToSend = _encodeOrDecode;
+            _info.add(_encodeOrDecode.substring(0,1));
+
+            // in case it is follow, userlist or stat ACK
+            int opcode = Integer.parseInt(_encodeOrDecode.substring(0,1));
+            String currString = _encodeOrDecode;
+            if (opcode == 4 || opcode == 7)
+            {
+                currString = currString.substring(_encodeOrDecode.indexOf(" ") + 1);
+                String numOfUsers = currString.substring(0 , currString.indexOf(" "));
+                _info.add(numOfUsers);
+                int numOfUsersInt = Integer.parseInt(numOfUsers);
+
+                for (int i = 0; i < numOfUsersInt - 1; i++) {
+                    currString = currString.substring(_encodeOrDecode.indexOf(" ") + 1);
+                    String username = currString.substring(0 , currString.indexOf(" "));
+                    _info.add(username);
+                }
+                String lastUsername = currString.substring(_encodeOrDecode.indexOf(" ") + 1);
+                _info.add(lastUsername);
+            }
+            else if (opcode == 8)
+            {
+                for (int i =0 ; i< 3 ; i++){
+                    currString = currString.substring(_encodeOrDecode.indexOf(" ") + 1);
+                    if (i != 2)
+                        _info.add(currString.substring(0, currString.indexOf(" ")));
+                    else
+                        _info.add(currString);
+                }
+            }
+
+        }
+
+        private void parseERROR() {
+            _encodeOrDecode.trim();
+            _info.add(_encodeOrDecode.substring(0,1));
+            _msgToSend = _encodeOrDecode;
         }
 
         public List<String> getRelevantInfo()
@@ -750,6 +853,13 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             return _cmdType.toString();
         }
 
+        public OpcodeCommand getOpcode(){
+            return _cmdType;
+        }
 
+        public String getMsgToSend()
+        {
+            return _msgToSend;
+        }
     }
 }
