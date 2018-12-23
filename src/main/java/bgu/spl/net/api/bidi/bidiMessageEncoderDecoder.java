@@ -63,7 +63,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
 
     private void cleanAll() {
         _message = null;
-        _opcode.clear();
     }
 
     // --------------------- ENCODE SECTION --------------------- //
@@ -82,11 +81,13 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             cmdString = cmdAndMsg;
         parseCommand(cmdString);
 
-        String msg = cmdAndMsg.substring(0, cmdString.length());
+        String msg = cmdAndMsg.substring(cmdString.length());
 
 //        res = new bidiMessages.bidiMessage(_message,msg);
 
-        return _message.encode(msg);
+        byte[] ans = _message.encode(msg);
+        cleanAll();
+        return ans;
 
     }
 

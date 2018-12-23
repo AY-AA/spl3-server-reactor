@@ -29,8 +29,8 @@ public class NewsFeedServerMain implements Runnable{
 //        Server.reactor(
 //                Runtime.getRuntime().availableProcessors(),
 //                7777, //port
-//                () ->  new RemoteCommandInvocationProtocol<>(feed), //protocol factory
-//                ObjectEncoderDecoder::new //message encoder decoder factory
+//                () ->  new bidiMessagingProtocolImpl(), //protocol factory
+//                bidiMessageEncoderDecoder::new //message encoder decoder factory
 //        ).serve();
     }
 }
