@@ -1,39 +1,38 @@
 package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
-
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Vector;
 
-public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<String> {
+public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMessages.bidiMessageResult> {
 
+    private bidiMessages.bidiMessageResult _result = null;
     private bidiMessages _message = null;
     private final ByteBuffer _opcode = ByteBuffer.allocate(2);
 
     // --------------------- DECODER --------------------- //
 
     @Override
-    public String decodeNextByte(byte nextByte) {
+    public bidiMessages.bidiMessageResult decodeNextByte(byte nextByte) {
         if (_message == null) { //indicates that we are still reading the opcode
             _opcode.put(nextByte);
             if (!_opcode.hasRemaining()) { //we read 2 bytes and therefore can take the command type
                 boolean hasMoreData = parseCommand();
                 _opcode.clear();
                 if (!hasMoreData) {
-                    String res = _message.decodeNextByte(nextByte);
                     cleanAll();
+                    String res = _message.decodeNextByte(nextByte);
+                    _result = new bidiMessages.bidiMessageResult(_message,res);
                 }
             }
         }
         else {
             String res =_message.decodeNextByte(nextByte);
-            if (res != null)
+            if (res != null) {
                 cleanAll();
-            return res;
+                _result = new bidiMessages.bidiMessageResult(_message,res);
+            }
         }
-        return null;
+        return _result;
     }
 
     private boolean parseCommand() {
@@ -72,8 +71,8 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<String> 
     // --------------------- ENCODE SECTION --------------------- //
 
     @Override
-    public byte[] encode(String str) {
-        int indexOfSpace = str.indexOf(" ");
+    public byte[] encode(bidiMessages.bidiMessageResult res) {
+        /*int indexOfSpace = str.indexOf(" ");
         String cmdString = null;
         if (indexOfSpace != -1) {
             cmdString = str.substring(0, indexOfSpace);
@@ -81,9 +80,13 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<String> 
         else
             cmdString = str;
         parseCommand(cmdString);
-        String msg = str.substring(0, cmdString.length());
+        String msg = str.substring(0, cmdString.length());*/
 
+        parseCommand(res.getCmdType());
+        String msg = res.getString();
+        _result = new bidiMessages.bidiMessageResult(_message,msg);
         return _message.encode(msg);
+
     }
 
     private void parseCommand(String command) {
@@ -113,125 +116,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<String> 
         }
     }
 
-    
-
-    private Vector<Byte> followBytes(String message) {
-        message = message.substring(message.indexOf(" ") + 1);
-        Vector<Byte> result = new Vector<>();
-        String followUnfollow = message.substring(0,message.indexOf(" "));
-        if (followUnfollow.contains("1"))
-            result.add((byte)1);
-        else
-            result.add((byte)0);
-
-        message = message.substring(message.indexOf(" ") + 1);
-        String numOfUsers = message.substring(0,message.indexOf(" "));
-        short numOfUsersShort = Short.parseShort(numOfUsers);
-        result.addAll(Arrays.asList(shortToBytes(numOfUsersShort)));
-
-        int users = numOfUsersShort;
-        String currString;
-        for (int i = 0 ; i < users ; i++){
-            message = message.substring(message.indexOf(" ") + 1);
-            if (i != users -1)
-                currString = message.substring(0,message.indexOf(" ")) + _delimiter;
-            else
-                currString = message + _delimiter;
-            byte[] CurrBytes = currString.getBytes();
-            addBytes (CurrBytes,result);
-        }
-        return result;
-    }
-
-    private Vector<Byte> postBytes(String message) {
-        message = message.substring(message.indexOf(" ") + 1);
-        Vector<Byte> result = new Vector<>();
-
-        message = message + _delimiter;
-        byte[] bytes = message.getBytes();
-        addBytes(bytes,result);
-
-        return result;
-    }
-
-    private Vector<Byte> statBytes(String message) {
-        message = message.substring(message.indexOf(" ") + 1) + _delimiter;
-        Vector<Byte> result = new Vector<>();
-
-        addBytes(message.getBytes(),result);
-
-        return result;
-    }
-
-    private Vector<Byte> notificationBytes(String message) {
-        Vector<Byte> result = new Vector<>();
-        message = message.substring(message.indexOf(" ") + 1);
-
-        String pmPublic = message.substring(0,message.indexOf(" "));
-        if (pmPublic.contains("0"))
-            result.add((byte)0);
-        else
-            result.add((byte)1);
-
-        message = message.substring(message.indexOf(" ") + 1);
-        String username = message.substring(0,message.indexOf(" ")) + _delimiter;
-        byte[] usernameBytes = username.getBytes();
-        addBytes(usernameBytes,result);
-
-        String content = message.substring(message.indexOf(" ") + 1) + _delimiter;
-        addBytes(content.getBytes(),result);
-        return result;
-    }
-
-    private Vector<Byte> ackErrorBytes(String message,boolean isError) {
-        Vector<Byte> result = new Vector<>();
-        message = message.substring(message.indexOf(" ") + 1);
-
-        short opcode = commandStringToShort(message);
-        if (opcode != -1) {
-            Byte[] opcodeBytes = shortToBytes(opcode);
-            result.addAll(Arrays.asList(opcodeBytes));
-        }
-        if (isError)
-            return result;
-        if (opcode == 4 || opcode == 7 || opcode == 8) {    //optional part addition
-            message = message.substring(message.indexOf(" ") + 1);
-            short numOfUsers = Short.parseShort(message.substring(0,message.indexOf(" ")));
-            result.addAll(Arrays.asList(shortToBytes(numOfUsers)));
-            if (opcode == 8)
-                ackStatBytes(message, result);
-            else
-                ackFollowUserListBytes(message, result, numOfUsers);
-        }
-        return result;
-    }
-
-    private void ackStatBytes(String message, Vector<Byte> result) {
-        message = message.substring(message.indexOf(" ") + 1);
-        short numOfUsers = Short.parseShort(message.substring(0,message.indexOf(" ")));
-        result.addAll(Arrays.asList(shortToBytes(numOfUsers)));
-        message = message.substring(message.indexOf(" ") + 1);
-        numOfUsers = Short.parseShort(message);
-        result.addAll(Arrays.asList(shortToBytes(numOfUsers)));
-    }
-
-    private void ackFollowUserListBytes(String message, Vector<Byte> result, int numOfUsers) {
-        for (int i =0 ; i < numOfUsers -1 ; i++)
-        {
-            message = message.substring(message.indexOf(" ") + 1);
-            String currUser = message.substring(0,message.indexOf(" "));
-            addBytes(currUser.getBytes(),result);
-
-        }
-        message = message.substring(message.indexOf(" ") + 1) + _delimiter;
-        addBytes(message.getBytes(),result);
-    }
-
-    private void addBytes(byte[] bytesToAdd,Vector<Byte> vectorToAdd){
-        for (int i = 0; i < bytesToAdd.length; i++) {
-            vectorToAdd.add(bytesToAdd[i]);
-        }
-
-    }
-
 }
+
+

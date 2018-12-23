@@ -16,19 +16,18 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     public void process(bidiMessages message) {
         OpcodeCommand opcodeCommand = message.getOpcode();
         switch (opcodeCommand){
-            case NULL:                          return;
-            case REGISTER:      register();     break;
-            case LOGIN:         login();        break;
-            case LOGOUT:        logout();       break;
-            case FOLLOW:        follow();       break;
-            case POST:          post();         break;
-            case PM:            pm();           break;
-            case USERLIST:      userlist();     break;
-            case STAT:          stat();         break;
-            case NOTIFICATION:  notification(); break;
-            case ACK:           ack();          break;
-            case ERROR:         error();        break;
-            default:                            return;
+            case REGISTER:     { register();     break;     }
+            case LOGIN:        { login();        break;     }
+            case LOGOUT:       { logout();       break;     }
+            case FOLLOW:       { follow();       break;     }
+            case POST:         { post();         break;     }
+            case PM:           { pm();           break;     }
+            case USERLIST:     { userlist();     break;     }
+            case STAT:         { stat();         break;     }
+            case NOTIFICATION: { notification(); break;     }
+            case ACK:          { ack();          break;     }
+            case ERROR:        { error();        break;     }
+            default:           {                 return;    }
         }
     }
 
