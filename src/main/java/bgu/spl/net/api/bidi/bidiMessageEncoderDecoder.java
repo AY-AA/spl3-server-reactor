@@ -39,7 +39,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
         short commandIndex = bytesToShort(_opcode.array());
         OpcodeCommand opcodeCommand = OpcodeCommand.values()[commandIndex];
         switch (opcodeCommand){
-            case NULL:          { _message = null; } break;
             case REGISTER:      { _message = new bidiMessages.RegisterLogin((short)1); return true; }
             case LOGIN:         { _message = new bidiMessages.RegisterLogin((short)2); return true; }
             case LOGOUT:        { _message = new bidiMessages.Logout();                return false;}
@@ -53,7 +52,6 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             case ERROR:         { _message = new bidiMessages.Error();                 return true; }
             default:            return false;
         }
-        return false;
     }
 
     public short bytesToShort(byte[] byteArr)

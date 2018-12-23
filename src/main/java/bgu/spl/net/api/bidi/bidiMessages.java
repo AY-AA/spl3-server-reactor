@@ -134,12 +134,11 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             return _bytes;
         }
 
-
         @Override
         public String decodeNextByte(byte nextByte) {
             if (nextByte == _delimiter){
                 String str = bytesToString();
-                if (_delimiter == 2) {
+                if (_numOfDelimiters == 2) {
                     _username = str;
                     _string += " " + str;
                 }
