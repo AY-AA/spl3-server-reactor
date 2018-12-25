@@ -1,5 +1,7 @@
 package bgu.spl.net.api.bidi;
 
+import bgu.spl.net.srv.bidi.ServerDB;
+
 import java.util.List;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
@@ -7,6 +9,12 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     private int _id;
     private Connections<bidiMessages.bidiMessage> _connections;
     private boolean _shouldTerminate;
+    private ServerDB _database;
+
+    public bidiMessagingProtocolImpl(ServerDB _database) {
+        this._database = _database;
+        _id = -1;
+    }
 
     @Override
     public void start(int connectionId, Connections<bidiMessages.bidiMessage> connections) {
@@ -19,7 +27,8 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         if (message.getRelevantInfo() == null)
             return;
         OpcodeCommand opcodeCommand = message.getOpcode();
-        switch (opcodeCommand){
+
+            switch (opcodeCommand){
             case REGISTER:     { register(message);     break;     }
             case LOGIN:        { login(message);        break;     }
             case LOGOUT:       { logout(message);       break;     }
@@ -43,48 +52,83 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     private void register(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
-        // TODO: implement
+
+        int dbResponse = _database.register(username,password);
+        //TODO : impl error msgs
+//        else if (dbResponse == -1)
+//            already registered ERROR;
+//        else
+//            _id = dbResponse;
     }
 
     private void login(bidiMessages.bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
-        // TODO: implement
+        int dbResponse = _database.login(username,password);
+        //TODO : impl error msgs
+//        if (dbResponse == -2)
+//            pw doesnt match ERROR;
+//        else if (dbResponse == -1)
+//            no such user ERROR;
+//        else
+//            _id = dbResponse;
     }
 
     private void logout(bidiMessages.bidiMessage message) {
-        _connections.disconnect(_id);
+        if (_id != -1)
+            _connections.disconnect(_id);
         _shouldTerminate = true;
     }
 
     private void follow(bidiMessages.bidiMessage message) {
+        //TODO : impl
+//        if (_id == -1)
+//            not connected ERROR;
+
         List<String> info = message.getRelevantInfo();
         int followUnfollowInt = Integer.parseInt(info.get(0));
         int numOfUsers = Integer.parseInt(info.get(1));
+        int numOfErrors = 0;
         for (int i = 2 ; i< 2 + numOfUsers ; i++){
             String currUsername = info.get(i);
-            if (followUnfollowInt == 1)
+            if (followUnfollowInt == 0) // follow
             {
-                // TODO : implement
+                if(_database.checkFollowAndFollow(_id,currUsername))
+                    numOfErrors++;
             }
-            else
+            else                        // unfollow
             {
-                // TODO : implement
+                if(_database.checkUnfollowAndUnfollow(_id,currUsername))
+                    numOfErrors++;
             }
         }
+        // TODO : impl
+//        if (numOfErrors == numOfUsers)
+//            ERROR;
     }
 
     private void post(bidiMessages.bidiMessage message) {
+        //TODO : impl
+//        if (_id == -1)
+//            not connected ERROR;
+
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);
         if (info.size() > 1) {        // has more users to send
             for (int i =1 ; i< info.size(); i++)
             {
                 String currUser = info.get(i);
-                // TODO : implement msg sending
+                int currUserId = _database.getId(currUser);
+                if (currUserId != -1) {
+                    if (!_connections.send(_id, message))
+                        _database.sendOfflineMsg(_id, currUser, msg);
+                }
             }
         }
-        // TODO : implement msg sending
+        List<Integer> followers = _database.getFollowers(_id);
+        for (Integer currUser : followers)
+            if (!_connections.send(currUser,message))
+                _database.sendOfflineMsgWithID(_id,currUser,msg);
     }
 
     private void pm(bidiMessages.bidiMessage message) {

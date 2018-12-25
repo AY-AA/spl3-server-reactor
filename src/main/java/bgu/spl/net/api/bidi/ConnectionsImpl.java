@@ -15,11 +15,9 @@ public class ConnectionsImpl implements Connections<bidiMessages.bidiMessage> {
 
     public ConnectionsImpl()
     {
-        //load _connectionsHAndler
         _connectionHandlers = new HashMap<>();
     }
 
-    // TODO : add support for disconnected users such as msg delivery even though they're logged off
 
     @Override
     public boolean send(int connectionId, bidiMessages.bidiMessage msg)
