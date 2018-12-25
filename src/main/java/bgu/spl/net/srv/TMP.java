@@ -29,7 +29,7 @@ public class TMP {
 
         bidiMessageEncoderDecoder encoderDecoder = new bidiMessageEncoderDecoder();
         String del = "\0";
-        byte[] xx = encoderDecoder.encode(new bidiMessages.bidiMessage("ERROR LOGOUT"));
+        byte[] xx = encoderDecoder.encode(new bidiMessages.bidiMessage("FOLLOW 1 2 A LOGOUT"));
         bidiMessages.bidiMessage y = null;
         int i =0;
         while (y == null && i<xx.length){
