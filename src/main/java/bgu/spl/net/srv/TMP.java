@@ -3,7 +3,6 @@ package bgu.spl.net.srv;
 import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
 import bgu.spl.net.api.bidi.bidiMessages;
 import bgu.spl.net.impl.newsfeed.NewsFeedClientMain;
-import bgu.spl.net.impl.newsfeed.NewsFeedServerMain;
 
 import javax.print.DocFlavor;
 import java.io.UnsupportedEncodingException;

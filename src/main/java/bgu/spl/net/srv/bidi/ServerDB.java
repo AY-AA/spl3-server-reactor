@@ -38,7 +38,7 @@ public class ServerDB{
     public ServerDB()
     {
         _usernamesAwaitingPublicMsgs = new HashMap<>();
-        _usernamesIds = new HashMap<>();
+        _usernamesIds = new ConcurrentHashMap<>();
         _usernamePassword = new HashMap<>();
         _followings = new HashMap<>();
         _followers = new HashMap<>();
@@ -184,5 +184,9 @@ public class ServerDB{
         if (_followings.get(usernameId) != null)
             return _followers.get(usernameId).size();
         return 1;
+    }
+
+    public List<Integer> getFollowers(int id) {
+        return _followers.get(id);
     }
 }
