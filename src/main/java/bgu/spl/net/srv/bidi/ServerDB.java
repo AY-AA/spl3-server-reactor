@@ -3,16 +3,25 @@ package bgu.spl.net.srv.bidi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerDB{
 
     // A data structure to hold all usernames and their ids
-    private HashMap<String,Integer> _usernamesIds;
+    private ConcurrentHashMap<String,Integer> _usernamesIds;
 
-    // A data structure to hold all usernames id and their awaiting msgs which were retrieved while they were offline
-    private HashMap<Integer, BlockingQueue<String>> _usernamesAwaitingMsgs;
+    // A data structure to hold all usernames id and their awaiting public msgs which were retrieved while they were offline
+    private HashMap<Integer, BlockingQueue<String>> _usernamesAwaitingPublicMsgs;
+
+    // A data structure to hold all usernames id and their awaiting pm msgs which were retrieved while they were offline
+    private HashMap<Integer, BlockingQueue<String>> _usernamesAwaitingPmMsgs;
+
+    // A data structure to hold all usernames id and the number of posted msgs
+    private HashMap<Integer,Integer> _numOfMsgsSentByUser;
 
     // A data structure to hold all usernames and passwords
     private HashMap<String,String> _usernamePassword;
@@ -28,11 +37,13 @@ public class ServerDB{
 
     public ServerDB()
     {
-        _usernamesAwaitingMsgs = new HashMap<>();
+        _usernamesAwaitingPublicMsgs = new HashMap<>();
         _usernamesIds = new HashMap<>();
         _usernamePassword = new HashMap<>();
         _followings = new HashMap<>();
         _followers = new HashMap<>();
+        _usernamesAwaitingPmMsgs = new HashMap<>();
+        _numOfMsgsSentByUser = new HashMap<>();
         _newestId = new AtomicInteger(0);
 
     }
@@ -45,38 +56,63 @@ public class ServerDB{
         return -1;
     }
 
-    public void sendOfflineMsg(int usernameId, String usernameToSend, String msg)
+    public void sendOfflineMsg(int senderUsernameId, String usernameToSend, String msg, boolean isPm)
     {
-        if (_usernamesIds.get(usernameToSend) == usernameId)
-            if (!_usernamesAwaitingMsgs.get(usernameId).contains(msg))
-                _usernamesAwaitingMsgs.get(usernameId).add(msg);
+        Integer idToSend = _usernamesIds.get(usernameToSend);
+        if (idToSend != null) {
+            if (!isPm && !_usernamesAwaitingPublicMsgs.get(idToSend).contains(msg)) {
+                _usernamesAwaitingPublicMsgs.get(idToSend).add(msg);
+                _numOfMsgsSentByUser.put(senderUsernameId, _numOfMsgsSentByUser.get(senderUsernameId) + 1);
+            } else if (isPm && _usernamesAwaitingPublicMsgs.get(idToSend) != null) {
+                _usernamesAwaitingPmMsgs.get(idToSend).add(msg);
+            }
+        }
     }
 
-    public void sendOfflineMsgWithID (int usernameId, int usernameToSend, String msg)
+    public void sendOfflineMsgWithID (int senderUsernameId, int usernameToSend, String msg)
     {
-
+        if (_usernamesAwaitingPublicMsgs.get(usernameToSend) != null)
+            if (!_usernamesAwaitingPublicMsgs.get(usernameToSend).contains(msg)) {
+                _usernamesAwaitingPublicMsgs.get(usernameToSend).add(msg);
+                _numOfMsgsSentByUser.put(senderUsernameId,_numOfMsgsSentByUser.get(senderUsernameId) +1);
+            }
     }
 
-    public String getAwaitingMsg(int usernameId)
+    public String getAwaitingPublicMsg(int usernameId)
     {
-        BlockingQueue queue = _usernamesAwaitingMsgs.get(usernameId);
+        BlockingQueue queue = _usernamesAwaitingPublicMsgs.get(usernameId);
         if (queue != null)
             return (String)queue.poll();
         return null;
     }
 
+    public String getAwaitingPmcMsg(int usernameId)
+    {
+        BlockingQueue queue = _usernamesAwaitingPmMsgs.get(usernameId);
+        if (queue != null)
+            return (String)queue.poll();
+        return null;
+    }
+
+
     public int register(String username, String password)
     {
         if (_usernamePassword.containsKey(username))
             return -1;
-        _usernamePassword.put(username,password);
         int lastKnown = _newestId.get();
         while (!_newestId.compareAndSet(lastKnown,lastKnown+1))
             lastKnown = _newestId.get();
-        _usernamesIds.put(username,lastKnown+1);
-        _followings.put(lastKnown+1,new ArrayList<>());
-        _followers.put(lastKnown+1,new ArrayList<>());
-        return lastKnown+1;
+
+        // data structures init
+        int userID = lastKnown +1;
+        _usernamesIds.put(username,userID);
+        _numOfMsgsSentByUser.put(userID,0);
+        _usernamesAwaitingPmMsgs.put(userID, new LinkedBlockingQueue<>());
+        _usernamesAwaitingPublicMsgs.put(userID, new LinkedBlockingQueue<>());
+        _usernamePassword.put(username,password);
+        _followings.put(userID,new ArrayList<>());
+        _followers.put(userID,new ArrayList<>());
+        return userID;
     }
 
     public int login(String username, String password)
@@ -109,10 +145,44 @@ public class ServerDB{
         return false;
     }
 
-    public List<Integer> getFollowers (int user)
-    {
-        return _followers.get(user);
+    public String getRegisteredUsers() {
+        StringBuilder ansBuilder = new StringBuilder();
+        for (String currUser : _usernamesIds.keySet())
+            ansBuilder.append(currUser);
+        String users = ansBuilder.toString().trim();
+        int numOfSpaces = 0;
+        for (int i = 0; i < users.length(); i++)
+        {
+            if (Character.isWhitespace(users.charAt(0)))
+                numOfSpaces++;
+        }
+        if (users.length() > 0)
+            numOfSpaces ++;
+        ansBuilder = new StringBuilder();
+        ansBuilder.append("" + numOfSpaces + " ");
+        ansBuilder.append(users);
+
+        return ansBuilder.toString();
     }
 
+    public int getNumOfPostsByUser( int user)
+    {
+        if (_numOfMsgsSentByUser.get(user) != null)
+            return _numOfMsgsSentByUser.get(user);
+        return -1;
 
+    }
+
+    public int getNumOfFollowers (int user)
+    {
+        if (_followers.get(user) != null)
+            return _followers.get(user).size();
+        return -1;
+    }
+
+    public int getNumOfFollowing(int usernameId) {
+        if (_followings.get(usernameId) != null)
+            return _followers.get(usernameId).size();
+        return 1;
+    }
 }

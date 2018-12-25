@@ -2,6 +2,7 @@ package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.srv.bidi.ServerDB;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
@@ -121,7 +122,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
                 int currUserId = _database.getId(currUser);
                 if (currUserId != -1) {
                     if (!_connections.send(_id, message))
-                        _database.sendOfflineMsg(_id, currUser, msg);
+                        _database.sendOfflineMsg(_id, currUser, msg,false);
                 }
             }
         }
@@ -132,20 +133,54 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void pm(bidiMessages.bidiMessage message) {
+        //TODO : impl
+//        if (_id == -1)
+//            not connected ERROR;
+
         String username = message.getRelevantInfo().get(0);
         String content = message.getRelevantInfo().get(1);
-        // TODO : implement
+        if (!_connections.send(_id,message))
+            _database.sendOfflineMsg(_id,username,content,true);
 
     }
 
     private void userlist(bidiMessages.bidiMessage message) {
-        // TODO : implement
+        //TODO : impl
+//        if (_id == -1)
+//            not connected ERROR;
+
+        String registeredUsers = _database.getRegisteredUsers();
+
+        bidiMessages.bidiMessage msgToSend = new bidiMessages.bidiMessage("ACK 7 " + registeredUsers);
+        _connections.send(_id,msgToSend);
 
     }
 
     private void stat(bidiMessages.bidiMessage message) {
+        //TODO : impl
+//        if (_id == -1)
+//            not connected ERROR;
+
         String username = message.getRelevantInfo().get(0);
-        // TODO : implement
+        int usernameId = _database.getId(username);
+        //TODO : impl if only!
+//        if (usernameId == -1)
+//            ERROR
+//        else{
+//            int posts = _database.getNumOfPostsByUser(usernameId);
+//            int followers = _database.getNumOfFollowers(usernameId);
+//            int following = _database.getNumOfFollowing(usernameId);
+//            if (posts != -1 && followers != -1 && following != -1)
+//            {
+//                String result = "" + posts + " " + followers + " " + following;
+//                bidiMessages.bidiMessage msgToSend = new bidiMessages.bidiMessage("ACK 8 " + result);
+//            }
+//            // TODO : delete after testing
+//            else    // won't happen
+//            {
+//                System.out.println("ERROR: bidiMessagingProtocolImpl: line 170, args = -1");
+//            }
+//        }
 
     }
 
@@ -153,8 +188,15 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         String pmPublic = message.getRelevantInfo().get(0);
         String username = message.getRelevantInfo().get(1);
         String content = message.getRelevantInfo().get(2);
-        // TODO : implement
-
+        boolean isPm = pmPublic.equals("PM");
+        int usernameId = _database.getId(username);
+        if (usernameId != -1 && !_connections.send(usernameId,message))
+        {
+            _database.sendOfflineMsg(_id,username,content,isPm);
+        }
+        // TODO imp ERROR
+//        else if (usernameId == -1 )
+//            ERROR
     }
 
     private void ack(bidiMessages.bidiMessage message) {
