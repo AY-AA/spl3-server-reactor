@@ -11,37 +11,58 @@ public class NewsFeedClientMain {
         }
 
         System.out.println("running clients");
-        runFirstClient(args[0]);
         runSecondClient(args[0]);
-        runThirdClient(args[0]);
+
+        runFirstClient(args[0]);
+//        runSecondClient(args[0]);
+//        runThirdClient(args[0]);
     }
 
     private static void runFirstClient(String host) throws Exception {
         try (RCIClient c = new RCIClient(host, 7777)) {
+            c.send(new bidiMessages.bidiMessage("REGISTER alex 111"));
+            System.out.println("REGISTER alex");
+
+            c.send(new bidiMessages.bidiMessage("LOGIN alex 111"));
+            System.out.println("LOGIN avishai");
+
             c.send(new bidiMessages.bidiMessage(
-                    "POST System Programmer, knowledge in C++, Java and Python required. call 0x134693F"));
+                    "POST hey @avishai how are u"));
             System.out.println("msg1 sent");
-            c.receive(); //ok
 
-            c.send(new bidiMessages.bidiMessage(
-                    "POST new SPL assignment is out soon!!"));
-            System.out.println("msg2 sent");
 
-            c.receive(); //ok
 
-            c.send(new bidiMessages.bidiMessage(
-                    "POST THE CAKE IS A LIE!"));
-            System.out.println("msg3 sent");
 
-            c.receive(); //ok
+//            c.receive(); //ok
+//
+//            c.send(new bidiMessages.bidiMessage(
+//                    "POST new SPL assignment is out soon!!"));
+//            System.out.println("msg2 sent");
+//
+//            c.receive(); //ok
+//
+//            c.send(new bidiMessages.bidiMessage(
+//                    "POST THE CAKE IS A LIE!"));
+//            System.out.println("msg3 sent");
+//
+//            c.receive(); //ok
         }
 
     }
 
     private static void runSecondClient(String host) throws Exception {
         try (RCIClient c = new RCIClient(host, 7777)) {
-            c.send(new bidiMessages.bidiMessage("jobs"));
-            System.out.println("second client received: " + c.receive());
+            c.send(new bidiMessages.bidiMessage("REGISTER avishai 1111"));
+            System.out.println("REGISTER avishai");
+
+            c.send(new bidiMessages.bidiMessage("LOGIN avishai 1111"));
+            System.out.println("LOGIN avishai");
+
+            Thread t = new Thread(c);
+            t.start();
+
+//            c.send(new bidiMessages.bidiMessage("jobs"));
+//            System.out.println("second client received: " + c.receive());
         }
     }
 

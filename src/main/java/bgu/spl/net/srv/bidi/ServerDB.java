@@ -20,6 +20,9 @@ public class ServerDB{
     // A data structure to hold all usernames id and their awaiting pm msgs which were retrieved while they were offline
     private HashMap<Integer, BlockingQueue<String>> _usernamesAwaitingPmMsgs;
 
+    // A data structure to hold all server username id and its DB username id
+    private HashMap<Integer,Integer> _serverDatabaseID;
+
     // A data structure to hold all usernames id and the number of posted msgs
     private HashMap<Integer,Integer> _numOfMsgsSentByUser;
 
@@ -32,7 +35,6 @@ public class ServerDB{
     // A data structure to hold all usernames followers
     private HashMap<Integer, List<Integer>> _followers;
 
-
     private AtomicInteger _newestId;
 
     public ServerDB()
@@ -43,9 +45,9 @@ public class ServerDB{
         _followings = new HashMap<>();
         _followers = new HashMap<>();
         _usernamesAwaitingPmMsgs = new HashMap<>();
+        _serverDatabaseID = new HashMap<>();
         _numOfMsgsSentByUser = new HashMap<>();
         _newestId = new AtomicInteger(0);
-
     }
 
     public int getId(String username)
@@ -95,16 +97,18 @@ public class ServerDB{
     }
 
 
-    public int register(String username, String password)
+    public int register(int serverId, String username, String password)
     {
         if (_usernamePassword.containsKey(username))
             return -1;
+
         int lastKnown = _newestId.get();
         while (!_newestId.compareAndSet(lastKnown,lastKnown+1))
             lastKnown = _newestId.get();
 
         // data structures init
         int userID = lastKnown +1;
+        _serverDatabaseID.put(serverId,userID);
         _usernamesIds.put(username,userID);
         _numOfMsgsSentByUser.put(userID,0);
         _usernamesAwaitingPmMsgs.put(userID, new LinkedBlockingQueue<>());
@@ -115,14 +119,21 @@ public class ServerDB{
         return userID;
     }
 
-    public int login(String username, String password)
+    public int login(int serverId, String username, String password)
     {
         if (_usernamePassword.containsKey(username)){
-            if (_usernamePassword.get(username).equals(password))
-                return _usernamesIds.get(username);
+            if (_usernamePassword.get(username).equals(password)){
+                int dbID = _usernamesIds.get(username);
+                _serverDatabaseID.put(serverId,dbID);
+                return dbID;
+            }
             return -2;
         }
         return -1;
+    }
+
+    public void disconnect(int serverID){
+        _serverDatabaseID.remove(serverID);
     }
 
     public boolean checkFollowAndFollow (int user, String follow)

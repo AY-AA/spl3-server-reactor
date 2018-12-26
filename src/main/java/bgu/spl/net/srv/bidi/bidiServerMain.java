@@ -10,13 +10,13 @@ public class bidiServerMain {
 
     public static void main(String[] args) {
 
-        ServerDB _database = new ServerDB();
+        ServerDB _database = new ServerDB(); // maybe remove and bidiMessagingProtocolImpl gets new ?
 
 // you can use any server...
         Server.threadPerClient(
                 7777, //port
                 () -> new bidiMessagingProtocolImpl(_database), //protocol factory
-                bidiMessageEncoderDecoder::new //message encoder decoder factory
+                () -> new bidiMessageEncoderDecoder() //message encoder decoder factory
         ).serve();
 
 //        Server.reactor(

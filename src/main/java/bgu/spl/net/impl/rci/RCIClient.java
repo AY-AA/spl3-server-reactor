@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.Socket;
 
-public class RCIClient implements Closeable {
+public class RCIClient implements Closeable,Runnable {
 
     private final bidiMessageEncoderDecoder encdec;
     private final Socket sock;
@@ -48,4 +48,12 @@ public class RCIClient implements Closeable {
         sock.close();
     }
 
+    @Override
+    public void run() {
+        try {
+            receive();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

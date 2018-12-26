@@ -7,21 +7,29 @@ import java.io.IOException;
 import java.net.Socket;
 
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.api.bidi.bidiMessages;
 import bgu.spl.net.srv.bidi.ConnectionHandler;
 
-public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler<T> {
+public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler<bidiMessages.bidiMessage> {
 
-    private final BidiMessagingProtocol<T> protocol;
-    private final MessageEncoderDecoder<T> encdec;
+    private final BidiMessagingProtocol<bidiMessages.bidiMessage> protocol;
+    private final MessageEncoderDecoder<bidiMessages.bidiMessage> encdec;
     private final Socket sock;
+    private final int ID;
+    private final Connections CONNECTIONS;
     private BufferedInputStream in;
     private BufferedOutputStream out;
     private volatile boolean connected = true;
 
-    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, BidiMessagingProtocol<T> protocol) {
+    public BlockingConnectionHandler(int id, Connections connections,Socket sock,
+                                     MessageEncoderDecoder<bidiMessages.bidiMessage> reader,
+                                     BidiMessagingProtocol<bidiMessages.bidiMessage> protocol) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+        CONNECTIONS = connections;
+        ID = id;
     }
 
     @Override
@@ -29,25 +37,18 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         try (Socket sock = this.sock) { //just for automatic closing
             int read;
 
+            protocol.start(ID,CONNECTIONS);
+
             in = new BufferedInputStream(sock.getInputStream());
             out = new BufferedOutputStream(sock.getOutputStream());
 
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
-                T nextMessage = encdec.decodeNextByte((byte) read);
+                bidiMessages.bidiMessage nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
-                    // TODO : figure out how to fix it, new interface returns nothing,
-                    //  BidiMsgProtocol sends msgs by itself using Connections send method!,
-                    //  So we need only "protocol.process(nextMessage);"
-                    //  but I cant find the initiation of this protocol using supplier.get lambda like Adler did in page 55 example..
-//                    T response = protocol.process(nextMessage);
                     protocol.process(nextMessage);
-
-//                    if (response != null) {
-//                        out.write(encdec.encode(response));
-//                        out.flush();
-                    }
                 }
-            } catch (IOException e) {
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -61,7 +62,11 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     }
 
     @Override
-    public void send(T msg) {
-
+    public void send(bidiMessages.bidiMessage msg) {
+        // TODO: c++ msg sending
+        /*
+            encodes msg.getMsgToSend() string and sends to client (to c++ app)
+         */
+        System.out.println(msg.getMsgToSend());
     }
 }

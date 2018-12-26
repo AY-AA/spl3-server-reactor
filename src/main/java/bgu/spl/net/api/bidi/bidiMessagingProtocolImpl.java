@@ -7,20 +7,21 @@ import java.util.List;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
 
-    private int _id;
+    private int _serverId, _dbId;
     private Connections<bidiMessages.bidiMessage> _connections;
-    private boolean _shouldTerminate;
+    private boolean _shouldTerminate, _loggedIn;
     private ServerDB _database;
 
     public bidiMessagingProtocolImpl(ServerDB _database) {
         this._database = _database;
-        _id = -1;
+        _dbId = _serverId = -1;
     }
 
     @Override
     public void start(int connectionId, Connections<bidiMessages.bidiMessage> connections) {
-        _id = connectionId;
+        _serverId = connectionId;
         _connections = connections;
+        _loggedIn = _shouldTerminate = false;
     }
 
     @Override
@@ -51,40 +52,55 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void register(bidiMessages.bidiMessage message) {
+//        if (_loggedIn){
+//            error;;;
+//        return;
+//    }
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
 
-        int dbResponse = _database.register(username,password);
+        int dbResponse = _database.register(_serverId,username,password);
         //TODO : impl error msgs
 //        else if (dbResponse == -1)
 //            already registered ERROR;
 //        else
-//            _id = dbResponse;
+//              _dbId = dbResponse;
+
     }
 
     private void login(bidiMessages.bidiMessage message) {
+        //        if (_loggedIn){
+//            error;;;
+//        return;
+//    }
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
-        int dbResponse = _database.login(username,password);
+        int dbResponse = _database.login(_serverId,username,password);
         //TODO : impl error msgs
 //        if (dbResponse == -2)
 //            pw doesnt match ERROR;
 //        else if (dbResponse == -1)
 //            no such user ERROR;
-//        else
-//            _id = dbResponse;
+//        else _dbId = dbResponse;
+//        _
     }
 
     private void logout(bidiMessages.bidiMessage message) {
-        if (_id != -1)
-            _connections.disconnect(_id);
-        _shouldTerminate = true;
+        if (_loggedIn) {
+            _connections.disconnect(_serverId);
+            _database.disconnect(_serverId);
+            _loggedIn = false;
+            _shouldTerminate = true;
+        }
+//        else
+//            ERROR;
     }
 
     private void follow(bidiMessages.bidiMessage message) {
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
         //TODO : impl
-//        if (_id == -1)
-//            not connected ERROR;
 
         List<String> info = message.getRelevantInfo();
         int followUnfollowInt = Integer.parseInt(info.get(0));
@@ -94,12 +110,12 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             String currUsername = info.get(i);
             if (followUnfollowInt == 0) // follow
             {
-                if(_database.checkFollowAndFollow(_id,currUsername))
+                if(_database.checkFollowAndFollow(_dbId,currUsername))
                     numOfErrors++;
             }
             else                        // unfollow
             {
-                if(_database.checkUnfollowAndUnfollow(_id,currUsername))
+                if(_database.checkUnfollowAndUnfollow(_dbId,currUsername))
                     numOfErrors++;
             }
         }
@@ -110,8 +126,9 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
 
     private void post(bidiMessages.bidiMessage message) {
         //TODO : impl
-//        if (_id == -1)
-//            not connected ERROR;
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
 
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);
@@ -121,45 +138,48 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
                 String currUser = info.get(i);
                 int currUserId = _database.getId(currUser);
                 if (currUserId != -1) {
-                    if (!_connections.send(_id, message))
-                        _database.sendOfflineMsg(_id, currUser, msg,false);
+                    if (!_connections.send(_dbId, message))
+                        _database.sendOfflineMsg(_dbId, currUser, msg,false);
                 }
             }
         }
-        List<Integer> followers = _database.getFollowers(_id);
+        List<Integer> followers = _database.getFollowers(_dbId);
         for (Integer currUser : followers)
             if (!_connections.send(currUser,message))
-                _database.sendOfflineMsgWithID(_id,currUser,msg);
+                _database.sendOfflineMsgWithID(_dbId,currUser,msg);
     }
 
     private void pm(bidiMessages.bidiMessage message) {
         //TODO : impl
-//        if (_id == -1)
-//            not connected ERROR;
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
 
         String username = message.getRelevantInfo().get(0);
         String content = message.getRelevantInfo().get(1);
-        if (!_connections.send(_id,message))
-            _database.sendOfflineMsg(_id,username,content,true);
+        if (!_connections.send(_dbId,message))
+            _database.sendOfflineMsg(_dbId,username,content,true);
 
     }
 
     private void userlist(bidiMessages.bidiMessage message) {
         //TODO : impl
-//        if (_id == -1)
-//            not connected ERROR;
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
 
         String registeredUsers = _database.getRegisteredUsers();
 
         bidiMessages.bidiMessage msgToSend = new bidiMessages.bidiMessage("ACK 7 " + registeredUsers);
-        _connections.send(_id,msgToSend);
+        _connections.send(_dbId,msgToSend);
 
     }
 
     private void stat(bidiMessages.bidiMessage message) {
         //TODO : impl
-//        if (_id == -1)
-//            not connected ERROR;
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
 
         String username = message.getRelevantInfo().get(0);
         int usernameId = _database.getId(username);
@@ -185,6 +205,9 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void notification(bidiMessages.bidiMessage message) {
+        //        if (!_loggedIn){
+//            error;;;
+//        return;
         String pmPublic = message.getRelevantInfo().get(0);
         String username = message.getRelevantInfo().get(1);
         String content = message.getRelevantInfo().get(2);
@@ -192,7 +215,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         int usernameId = _database.getId(username);
         if (usernameId != -1 && !_connections.send(usernameId,message))
         {
-            _database.sendOfflineMsg(_id,username,content,isPm);
+            _database.sendOfflineMsg(_dbId,username,content,isPm);
         }
         // TODO imp ERROR
 //        else if (usernameId == -1 )
