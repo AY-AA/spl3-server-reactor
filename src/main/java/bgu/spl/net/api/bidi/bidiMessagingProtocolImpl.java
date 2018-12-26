@@ -30,19 +30,49 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             return;
         OpcodeCommand opcodeCommand = message.getOpcode();
 
-            switch (opcodeCommand){
-            case REGISTER:     { register(message);     break;     }
-            case LOGIN:        { login(message);        break;     }
-            case LOGOUT:       { logout(message);       break;     }
-            case FOLLOW:       { follow(message);       break;     }
-            case POST:         { post(message);         break;     }
-            case PM:           { pm(message);           break;     }
-            case USERLIST:     { userlist(message);     break;     }
-            case STAT:         { stat(message);         break;     }
-            case NOTIFICATION: { notification(message); break;     }
-            case ACK:          { ack(message);          break;     }
-            case ERROR:        { error(message);        break;     }
-            default:           {                        return;    }
+        switch (opcodeCommand){
+            case REGISTER:     { if (checkLogged(opcodeCommand)) register(message);     break;     }
+            case LOGIN:        { if (checkLogged(opcodeCommand)) login(message);        break;     }
+            case LOGOUT:       { if (checkLogged(opcodeCommand)) logout(message);       break;     }
+            case FOLLOW:       { if (checkLogged(opcodeCommand)) follow(message);       break;     }
+            case POST:         { if (checkLogged(opcodeCommand)) post(message);         break;     }
+            case PM:           { if (checkLogged(opcodeCommand)) pm(message);           break;     }
+            case USERLIST:     { if (checkLogged(opcodeCommand)) userlist(message);     break;     }
+            case STAT:         { if (checkLogged(opcodeCommand)) stat(message);         break;     }
+            case NOTIFICATION: { if (checkLogged(opcodeCommand)) notification(message); break;     }
+            case ACK:          { if (checkLogged(opcodeCommand)) ack(message);          break;     }
+            case ERROR:        { if (checkLogged(opcodeCommand)) error(message);        break;     }
+            default:           {                                                        return;    }
+        }
+    }
+
+    private boolean checkLogged(OpcodeCommand opcodeCommand) {
+        switch (opcodeCommand){
+            case REGISTER:     {
+                if (_loggedIn) 
+                break;     }
+            case LOGIN:        {
+                break;     }
+            case LOGOUT:       {
+                break;     }
+            case FOLLOW:       {
+                break;
+            }
+            case POST:         {
+                break;
+            }
+            case PM:           {
+                break;
+            }
+            case USERLIST:     {
+
+            }
+            case STAT:         {
+
+            }
+            case NOTIFICATION: {
+
+            }
         }
     }
 
@@ -52,37 +82,39 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void register(bidiMessages.bidiMessage message) {
-//        if (_loggedIn){
-//            error;;;
-//        return;
-//    }
+//
+//        if (_loggedIn){ // TODO : change it
+//            errorMsg("loggedin");
+//            return;
+//        }
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
 
         int dbResponse = _database.register(_serverId,username,password);
         //TODO : impl error msgs
-//        else if (dbResponse == -1)
-//            already registered ERROR;
-//        else
-//              _dbId = dbResponse;
+        if (dbResponse == -1)
+            errorMsg("already registered");
+        else
+            _dbId = dbResponse;
 
     }
 
+
     private void login(bidiMessages.bidiMessage message) {
-        //        if (_loggedIn){
-//            error;;;
-//        return;
-//    }
+//        if (_loggedIn){ // TODO : change it
+//            errorMsg("loggedin");
+//            return;
+//        }
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
         int dbResponse = _database.login(_serverId,username,password);
         //TODO : impl error msgs
-//        if (dbResponse == -2)
-//            pw doesnt match ERROR;
-//        else if (dbResponse == -1)
-//            no such user ERROR;
-//        else _dbId = dbResponse;
-//        _
+        if (dbResponse == -2)
+            errorMsg("wrong pw");
+        else if (dbResponse == -1)
+            errorMsg("no such username");
+        else
+            _dbId = dbResponse;
     }
 
     private void logout(bidiMessages.bidiMessage message) {

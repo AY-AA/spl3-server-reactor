@@ -67,6 +67,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         /*
             encodes msg.getMsgToSend() string and sends to client (to c++ app)
          */
-        System.out.println(msg.getMsgToSend());
+
+        System.out.println(Thread.currentThread().getName() +" received : " + msg.getMsgToSend());
     }
 }

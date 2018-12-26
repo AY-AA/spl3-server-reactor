@@ -6,7 +6,7 @@ import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
 import bgu.spl.net.srv.Server;
 import bgu.spl.net.srv.bidi.ServerDB;
 
-public class bidiServerMain {
+public class bidiServerMain{
 
     public static void main(String[] args) {
 
@@ -27,4 +27,5 @@ public class bidiServerMain {
 //        ).serve();
 
     }
+
 }

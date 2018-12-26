@@ -2,73 +2,67 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
 import bgu.spl.net.api.bidi.bidiMessages;
+import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
 import bgu.spl.net.impl.newsfeed.NewsFeedClientMain;
+import bgu.spl.net.srv.bidi.ServerDB;
+import bgu.spl.net.srv.bidi.bidiServerMain;
 
 import javax.print.DocFlavor;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-public class TMP {
+public class TMP implements Runnable{
     public static void main(String []args) throws Exception {
-//        NewsFeedServerMain serverMain = new NewsFeedServerMain();
-//        Thread t = new Thread(serverMain);
-//        t.start();
-//        Thread.currentThread().sleep(200);
-////        NewsFeedServerMain.startServer(null);
-//        NewsFeedClientMain.main(null);
-//
-//        byte _delimiter = '\0';
-//        System.out.println(_delimiter);
-
-
-
-
-        bidiMessageEncoderDecoder encoderDecoder = new bidiMessageEncoderDecoder();
-        String del = "\0";
-        byte[] xx = encoderDecoder.encode(new bidiMessages.bidiMessage("FOLLOW 1 2 A LOGOUT"));
-        bidiMessages.bidiMessage y = null;
-        int i =0;
-        while (y == null && i<xx.length){
-            y = encoderDecoder.decodeNextByte(xx[i]);
-            i++;
-        }
-//        byte _delimiter = '\0';
-//        String aa = "\0";
-//        byte[] aaa = aa.getBytes();
-
-        System.out.println(y.getMsgToSend());
-        List<String> a = y.getRelevantInfo();
-        for (String st : a)
-            System.out.println( st);
-//        System.out.println(_delimiter == aaa[0]);
-
-
-//
-//        System.out.println(Short.BYTES);
-
-//        ByteBuffer _opcode = ByteBuffer.allocate(4);
-//        _opcode.put(xx[0]);
-//
-////        short aaa = 5;
-////        byte[] a = shortToBytes(aaa);
-//        System.out.println("aaaa");
-
-//        String a = "1 I follow follow ok ok ok";
-//        String ans = a.replaceAll("follow","");
-//        ans = ans.replaceAll("  "," ");
-//        int opcode = Integer.parseInt(a.substring(0,1));
-//        System.out.println(opcode);
+        test1();
     }
 
-    public static byte[] shortToBytes(short num)
-    {
-        byte[] bytesArr = new byte[2];
-        bytesArr[0] = (byte)((num >> 8) & 0xFF);
-        bytesArr[1] = (byte)(num & 0xFF);
-        return bytesArr;
+    private static void test1() throws IOException {
+        Thread t = new Thread(new TMP());
+        t.start();
+
+        try {
+            Thread.currentThread().sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Client1 c1 = new Client1("127.0.0.1", 7777);
+        Thread t1 = new Thread(c1);
+        t1.start();
+
+        try {
+            Thread.currentThread().sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Client2 c2 = new Client2("127.0.0.1", 7777);
+        Thread t2 = new Thread(c2);
+        t2.start();
+
+    }
+
+    @Override
+    public void run() {
+        ServerDB _database = new ServerDB(); // maybe remove and bidiMessagingProtocolImpl gets new ?
+
+// you can use any server...
+        Server.threadPerClient(
+                7777, //port
+                () -> new bidiMessagingProtocolImpl(_database), //protocol factory
+                () -> new bidiMessageEncoderDecoder() //message encoder decoder factory
+        ).serve();
+
+//        Server.reactor(
+//                Runtime.getRuntime().availableProcessors(),
+//                7777, //port
+//                () ->  new bidiMessagingProtocolImpl(_database), //protocol factory
+//                bidiMessageEncoderDecoder::new //message encoder decoder factory
+//        ).serve();
     }
 
 }
