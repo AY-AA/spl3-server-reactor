@@ -55,7 +55,7 @@ public abstract class BaseServer<T> implements Server<T> {
                     lastID = _lastId.get();
 
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler(
-                        lastID,
+                        lastID+1,
                         _connections,
                         clientSock,
                         encdecFactory.get(),

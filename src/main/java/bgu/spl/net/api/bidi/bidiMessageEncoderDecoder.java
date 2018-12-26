@@ -14,6 +14,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
     @Override
     public bidiMessages.bidiMessage decodeNextByte(byte nextByte) {
         if (_message == null) { //indicates that we are still reading the opcode
+            _result = null;
             _opcode.put(nextByte);
             if (!_opcode.hasRemaining()) { //we read 2 bytes and therefore can take the command type
                 boolean hasMoreData = parseCommand();
@@ -63,6 +64,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
 
     private void cleanAll() {
         _message = null;
+//        _result = null;
     }
 
     // --------------------- ENCODE SECTION --------------------- //
@@ -84,7 +86,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
 
 //        res = new bidiMessages.bidiMessage(_message,msg);
 
-        byte[] ans = _message.encode(msg);
+        byte[] ans = _message.encode(msg.trim());
         cleanAll();
         return ans;
 

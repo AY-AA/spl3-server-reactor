@@ -58,26 +58,20 @@ public class ServerDB{
         return -1;
     }
 
-    public void sendOfflineMsg(int senderUsernameId, String usernameToSend, String msg, boolean isPm)
+    public void sendOfflineMsg (int senderUsernameId, int usernameToSend, String msg, boolean isPm)
     {
-        Integer idToSend = _usernamesIds.get(usernameToSend);
-        if (idToSend != null) {
-            if (!isPm && !_usernamesAwaitingPublicMsgs.get(idToSend).contains(msg)) {
-                _usernamesAwaitingPublicMsgs.get(idToSend).add(msg);
-                _numOfMsgsSentByUser.put(senderUsernameId, _numOfMsgsSentByUser.get(senderUsernameId) + 1);
-            } else if (isPm && _usernamesAwaitingPublicMsgs.get(idToSend) != null) {
-                _usernamesAwaitingPmMsgs.get(idToSend).add(msg);
-            }
+        if (!isPm && !_usernamesAwaitingPublicMsgs.get(usernameToSend).contains(msg)){
+            //msg was already sent
+            // it can happen in case username follows and gets this message
+            // because '@username' is included inside the msg
+            _usernamesAwaitingPublicMsgs.get(usernameToSend).add(msg);
+            _numOfMsgsSentByUser.put(senderUsernameId, _numOfMsgsSentByUser.get(senderUsernameId) + 1);
         }
-    }
+        else if (isPm && !_usernamesAwaitingPmMsgs.get(usernameToSend).contains(msg)) {
+            _usernamesAwaitingPmMsgs.get(usernameToSend).add(msg);
+            _numOfMsgsSentByUser.put(senderUsernameId, _numOfMsgsSentByUser.get(senderUsernameId) + 1);
+        }
 
-    public void sendOfflineMsgWithID (int senderUsernameId, int usernameToSend, String msg)
-    {
-        if (_usernamesAwaitingPublicMsgs.get(usernameToSend) != null)
-            if (!_usernamesAwaitingPublicMsgs.get(usernameToSend).contains(msg)) {
-                _usernamesAwaitingPublicMsgs.get(usernameToSend).add(msg);
-                _numOfMsgsSentByUser.put(senderUsernameId,_numOfMsgsSentByUser.get(senderUsernameId) +1);
-            }
     }
 
     public String getAwaitingPublicMsg(int usernameId)
@@ -95,7 +89,6 @@ public class ServerDB{
             return (String)queue.poll();
         return null;
     }
-
 
     public int register(int serverId, String username, String password)
     {
@@ -127,7 +120,6 @@ public class ServerDB{
                 _serverDatabaseID.put(serverId,dbID);
                 return dbID;
             }
-            return -2;
         }
         return -1;
     }
@@ -139,7 +131,7 @@ public class ServerDB{
     public boolean checkFollowAndFollow (int user, String follow)
     {
         Integer userToFollowId = _usernamesIds.get(follow);
-        if (userToFollowId != null && _followings.get(user).contains(userToFollowId))
+        if (_followings.get(user).contains(userToFollowId))
             return true;
         _followings.get(user).add(userToFollowId);
         _followers.get(userToFollowId).add(user);
@@ -149,7 +141,7 @@ public class ServerDB{
     public boolean checkUnfollowAndUnfollow (int user, String follow)
     {
         Integer userToFollowId = _usernamesIds.get(follow);
-        if (userToFollowId != null && !_followings.get(user).contains(userToFollowId))
+        if (!_followings.get(user).contains(userToFollowId))
             return true;
         _followings.get(user).remove(userToFollowId);
         _followers.get(userToFollowId).remove(user);
@@ -159,21 +151,15 @@ public class ServerDB{
     public String getRegisteredUsers() {
         StringBuilder ansBuilder = new StringBuilder();
         for (String currUser : _usernamesIds.keySet())
-            ansBuilder.append(currUser);
-        String users = ansBuilder.toString().trim();
-        int numOfSpaces = 0;
-        for (int i = 0; i < users.length(); i++)
-        {
-            if (Character.isWhitespace(users.charAt(0)))
-                numOfSpaces++;
+            ansBuilder.append(currUser + " ");
+        String tmp = ansBuilder.toString().trim();
+        int numOfUsers = 0;                 // count number of spaces this way
+        while (tmp.contains(" ")){          // of implementation is because someone can
+            numOfUsers++;                   // register while the for loop ends and then size changes
+            tmp = tmp.substring(0,tmp.indexOf(" ") +1);
         }
-        if (users.length() > 0)
-            numOfSpaces ++;
-        ansBuilder = new StringBuilder();
-        ansBuilder.append("" + numOfSpaces + " ");
-        ansBuilder.append(users);
-
-        return ansBuilder.toString();
+        String ans = numOfUsers + ansBuilder.toString().trim();
+        return ans;
     }
 
     public int getNumOfPostsByUser( int user)
@@ -199,5 +185,16 @@ public class ServerDB{
 
     public List<Integer> getFollowers(int id) {
         return _followers.get(id);
+    }
+
+    public int getServerID(int dbID)
+    {
+        if (dbID == -1)
+            return -1;
+        for (Integer databaseId : _serverDatabaseID.keySet()){
+            if (_serverDatabaseID.get(databaseId) == dbID)
+                return databaseId;
+        }
+        return -1;
     }
 }

@@ -52,14 +52,13 @@ public class Client2 implements Closeable,Runnable {
 
         try {
             send(new bidiMessages.bidiMessage("REGISTER alex 111"));
-            System.out.println("REGISTER alex");
+//            System.out.println("LOGOUT");
 
             send(new bidiMessages.bidiMessage("LOGIN alex 111"));
-            System.out.println("LOGIN alex");
+//            System.out.println("LOGIN alex");
 
-            send(new bidiMessages.bidiMessage(
-                    "POST hey @avishai how are u"));
-            System.out.println("message was sent to avishai from alex");
+            send(new bidiMessages.bidiMessage("LOGOUT"));
+//            System.out.println("message was sent to avishai from alex");
 
 
 

@@ -3,12 +3,12 @@ package bgu.spl.net.srv;
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
 import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
 
 import java.io.Closeable;
 import java.util.function.Supplier;
 
 public interface Server<T> extends Closeable {
-
     /**
      * The main loop of the server, Starts listening and handling new clients.
      */
@@ -32,6 +32,12 @@ public interface Server<T> extends Closeable {
         ) {
             @Override
             protected void execute(BlockingConnectionHandler<T>  handler) {
+                Thread t = new Thread(handler);
+                if (bidiMessagingProtocolImpl.a == 0)
+                    t.setName("AVISHAI");
+                else
+                    t.setName("ALEX");
+                bidiMessagingProtocolImpl.a ++;
                 new Thread(handler).start();
             }
         };

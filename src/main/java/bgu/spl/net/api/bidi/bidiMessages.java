@@ -485,11 +485,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private final short _opcode = 10;
 
         public ACK()
-        {
-            byte[] tmpBytes = "ACK".getBytes();
-            addBytesToVector(tmpBytes);
-            _string = bytesToString();
-        }
+        {        }
 
         @Override
         public String decodeNextByte(byte nextByte) {
@@ -692,6 +688,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         public bidiMessage(String toEncode)
         {
+            _msgToSend = toEncode;
             _encodeOrDecode = toEncode;
         }
 

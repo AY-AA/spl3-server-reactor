@@ -63,11 +63,13 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
 
     @Override
     public void send(bidiMessages.bidiMessage msg) {
+        byte[] encodedData = msg.getMsgToSend().getBytes();
         // TODO: c++ msg sending
         /*
-            encodes msg.getMsgToSend() string and sends to client (to c++ app)
+            encodes msg.getMsgToSend() string  to bytes and sends to client (to c++ app)
          */
 
-        System.out.println(Thread.currentThread().getName() +" received : " + msg.getMsgToSend());
+        System.out.println(Thread.currentThread().getName() +" received : " + msg.getMsgToSend() );
+
     }
 }
