@@ -49,7 +49,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     private boolean checkLogged(OpcodeCommand opcodeCommand) {
         switch (opcodeCommand){
             case REGISTER:     {
-                if (_loggedIn) 
+                if (_loggedIn)
                 break;     }
             case LOGIN:        {
                 break;     }
