@@ -43,11 +43,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             case PM:           { if (checkLogged(opcodeCommand)) pm(message);           break;     }
             case USERLIST:     { if (checkLogged(opcodeCommand)) userlist(message);     break;     }
             case STAT:         { if (checkLogged(opcodeCommand)) stat(message);         break;     }
-            // TODO : remove notification, ack and error
-            case NOTIFICATION: {  notification(message); break;     }
-            case ACK:          {  ack(message);          break;     }
-            case ERROR:        {  error(message);        break;     }
-            default:           {                         return;    }
+            default:           {                                                        return;    }
 
 
 
@@ -280,60 +276,4 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         stringBuilder.append(_username + " " + msg);
         return new bidiMessages.bidiMessage(stringBuilder.toString());
     }
-
-
-
-
-
-
-
-
-
-
-
-
-    // TODO : delete it --- > needs to be in client only!
-    private void notification(bidiMessages.bidiMessage message) {
-        System.out.println("REACHED HERE notification");
-//        String pmPublic = message.getRelevantInfo().get(0);
-//        String username = message.getRelevantInfo().get(1);
-//        String content = message.getRelevantInfo().get(2);
-//        boolean isPm = pmPublic.equals("PM");
-//        int usernameId = _database.getId(username);
-//        if (usernameId != -1 && !_connections.send(usernameId,message))
-//        {
-//            System.out.println("new notification :");
-//            System.out.println(message.getMsgToSend());
-////            _database.sendOfflineMsg(_dbId,username,content,isPm);
-//        }
-
-    }
-
-    // TODO : delete it --- > needs to be in client only!
-    private void ack(bidiMessages.bidiMessage message) {
-        System.out.println("REACHED HERE ack");
-//
-//        StringBuilder stringBuilder = new StringBuilder();
-//        List<String> stringList = message.getRelevantInfo();
-//
-//        for (String currString : stringList)
-//            stringBuilder.append(currString + " ");
-//
-//        String result = stringBuilder.toString();
-//        System.out.println(result);
-
-    }
-
-    // TODO : delete it --- > needs to be in client only!
-    private void error(bidiMessages.bidiMessage message) {
-        System.out.println("REACHED HERE error");
-//
-//        String result = message.getRelevantInfo().get(0);
-//        System.out.println(result);
-
-
-    }
-
-
-
 }
