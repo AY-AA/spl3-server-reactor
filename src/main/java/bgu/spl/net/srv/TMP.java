@@ -34,16 +34,13 @@ public class TMP implements Runnable{
         Thread t1 = new Thread(c1);
         t1.start();
 
-        try {
-            Thread.currentThread().sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         Client2 c2 = new Client2("127.0.0.1", 7777);
         Thread t2 = new Thread(c2);
         t2.start();
 
+        Client3 c3 = new Client3("127.0.0.1", 7777);
+        Thread t3 = new Thread(c3);
+        t3.start();
     }
 
     @Override

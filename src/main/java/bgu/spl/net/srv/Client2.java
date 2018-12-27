@@ -51,18 +51,28 @@ public class Client2 implements Closeable,Runnable {
     public void run() {
 
         try {
+
             send(new bidiMessages.bidiMessage("REGISTER alex 111"));
 //            System.out.println("LOGOUT");
 
             send(new bidiMessages.bidiMessage("LOGIN alex 111"));
 //            System.out.println("LOGIN alex");
 
-            send(new bidiMessages.bidiMessage("LOGOUT"));
-//            System.out.println("message was sent to avishai from alex");
+            Thread.currentThread().sleep(3000);
+
+            for (int i = 0; i < 10; i++) {
+                send(new bidiMessages.bidiMessage("POST avishai msg num: " + i));
+
+            }
+//
+//            send(new bidiMessages.bidiMessage("PM avishai AAA"));
+////            System.out.println("message was sent to avishai from alex");
 
 
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         try {

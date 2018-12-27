@@ -5,6 +5,7 @@ import bgu.spl.net.srv.bidi.ServerDB;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
     public static int a= 0;
@@ -46,7 +47,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             case NOTIFICATION: {  notification(message); break;     }
             case ACK:          {  ack(message);          break;     }
             case ERROR:        {  error(message);        break;     }
-            default:           {                                                        return;    }
+            default:           {                         return;    }
 
 
 
@@ -150,6 +151,15 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             _dbId = dbResponse;
             sendACK("2");
             _username = username;
+            sendAwaitingMsgs();
+        }
+    }
+
+    private void sendAwaitingMsgs() {
+        bidiMessages.bidiMessage missingMsg = _database.getAwaitingMsg(_dbId);
+        while (missingMsg != null) {
+            _connections.send(_serverId,missingMsg);
+            missingMsg = _database.getAwaitingMsg(_dbId);
         }
     }
 
@@ -189,7 +199,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         else
         {
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("" + (numOfUsers - numOfFailures));    //num of successful attempts
+            stringBuilder.append("4 " + (numOfUsers - numOfFailures) + " ");    //num of successful attempts
             for (String username : successfulAtemptsUsername)
                 stringBuilder.append(username + " ");                   //insert all username successfully followed/unfollowed
             String ackString = stringBuilder.toString().trim();
@@ -200,24 +210,19 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     private void post(bidiMessages.bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);       // msg index is 0 and usernames index is i > 0
+        Set<Integer> sendTo = _database.getFollowers(_dbId);
         if (info.size() > 1) {          // has more users to send
-            for (int i =1 ; i< info.size(); i++)
-            {                                       // sends the message to all usernames appear in message after '@'
+            for (int i =1 ; i< info.size(); i++) {      // finds all usernames appear in message after '@'
                 String currUser = info.get(i);
-                int currUserDBId = _database.getId(currUser);
-                int currUserServerID = _database.getServerID(currUserDBId);
-                if (currUserDBId != -1) {
-                    if (!_connections.send(currUserServerID, createNotification(msg,false)))
-                        _database.sendOfflineMsg(currUserDBId, currUserDBId, msg,false);
-                }
+                sendTo.add(_database.getId(currUser));
             }
-        }   //sends the message to all current username followers
-        List<Integer> followers = _database.getFollowers(_dbId);
-        for (Integer currUserDBID : followers) {
+        }   //sends the message to all users
+        for (Integer currUserDBID : sendTo) {
             int currUserServerID = _database.getServerID(currUserDBID);
             if (!_connections.send(currUserServerID, createNotification(msg,false)))
-                _database.sendOfflineMsg(_dbId, currUserDBID, msg,false);
+                _database.sendOfflineMsg(currUserDBID, createNotification(msg, false));
         }
+        _database.addPostCount(_dbId);
         sendACK("5");
     }
 
@@ -226,11 +231,14 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         String content = message.getRelevantInfo().get(1);
         int usernameDBID = _database.getId(username);
         int usernameServerID = _database.getServerID(usernameDBID);
-        if (usernameDBID == -1)     // there's no such username
+        if (usernameDBID == -1) {     // there's no such username
             sendError("6");
-        else if (!_connections.send(usernameServerID,createNotification(content, true)))
-            _database.sendOfflineMsg(_dbId,usernameDBID,content,true);
-
+            return;
+        }
+        else if (!_connections.send(usernameServerID,createNotification(content, true))) {
+            _database.sendOfflineMsg(usernameDBID, createNotification(content, true));
+        }
+        sendACK("6");
     }
 
     private void userlist(bidiMessages.bidiMessage message) {
@@ -268,7 +276,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         if (isPm)
             stringBuilder.append("9 0 ");
         else
-            stringBuilder.append("0 1 ");
+            stringBuilder.append("9 1 ");
         stringBuilder.append(_username + " " + msg);
         return new bidiMessages.bidiMessage(stringBuilder.toString());
     }

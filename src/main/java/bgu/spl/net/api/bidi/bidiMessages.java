@@ -5,9 +5,7 @@ import org.omg.CORBA.IMP_LIMIT;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
@@ -95,8 +93,21 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        bidiMessages messages = (bidiMessages) o;
+        return Objects.equals(_string, messages._string);
+    }
 
-
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(ENCODING, _delimiter, _strDelimeter, _numOfDelimiters, _byteVector, _string, _firstDelimiter);
+        result = 31 * result + Arrays.hashCode(_bytesDelimiter);
+        result = 31 * result + Arrays.hashCode(_bytes);
+        return result;
+    }
 
     public static class RegisterLogin extends bidiMessages {
 
@@ -183,6 +194,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private boolean _foundNumOfUsers, _followUnfollowFound = false;
         private int _counter = 0; // counts number of times reached here to know whether numOfUsers has been reached
         private final ByteBuffer _numOfUsers = ByteBuffer.allocate(2);
+        private final ByteBuffer _followUnfollow = ByteBuffer.allocate(2);
         private List<String> _usersList = new ArrayList<>();
         private final short _opcode = 4;
 
@@ -209,10 +221,14 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         }
 
         private void updateFollowUnfollow(byte nextByte) {
-            _followUnfollowFound = true;
-            _byteVector.add(nextByte);
-            _string += nextByte;
-            _byteVector.clear();
+            _followUnfollow.put(nextByte);
+            if (!_followUnfollow.hasRemaining()) {
+                short followUnfollow = bytesToShort(_followUnfollow.array());
+                _followUnfollowFound = true;
+                _byteVector.add(nextByte);
+                _string += " " + followUnfollow;
+                _byteVector.clear();
+            }
         }
 
         private void findNumOfUsers(byte nextByte) {
@@ -235,10 +251,8 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             addBytesToVector(shortToBytes(_opcode));
 
             String followUnfollow = message.substring(0,message.indexOf(" "));
-            if (followUnfollow.contains("1"))
-                _byteVector.add((byte)1);
-            else
-                _byteVector.add((byte)0);
+            short followUnfollowShort = Short.parseShort(followUnfollow);
+            addBytesToVector(shortToBytes(followUnfollowShort));
 
             message = message.substring(message.indexOf(" ") + 1);
             String numOfUsers = message.substring(0,message.indexOf(" "));
@@ -419,6 +433,8 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         private boolean _pmPublicFound = false;
         private final short _opcode = 9;
+        private final ByteBuffer _pmPost = ByteBuffer.allocate(2);
+
 
         public Notification() {
             _numOfDelimiters = 2;
@@ -439,12 +455,13 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         }
 
         private void updatePmPublic(byte nextByte) {
-            _pmPublicFound = true;
-            if (nextByte == 0)
-                _string += "PM";
-            else
-                _string += "POST";
-            _byteVector.clear();
+            _pmPost.put(nextByte);
+            if (!_pmPost.hasRemaining()) {
+                short pmPost = bytesToShort(_pmPost.array());
+                _pmPublicFound = true;
+                _string += " " + pmPost;
+                _byteVector.clear();
+            }
         }
 
         @Override
@@ -717,7 +734,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         }
 
         private void parseFollow() {
-            _encodeOrDecode.trim();
+            _encodeOrDecode = _encodeOrDecode.trim();
             String followUnfollow = _encodeOrDecode.substring(0,_encodeOrDecode.indexOf(" "));
             _info.add(followUnfollow);
 

@@ -8,7 +8,6 @@ import java.util.HashMap;
  */
 public class ConnectionsImpl<T> implements Connections<T> {
 
-
     // each Integer represents an unique client's ID and its value is the client's connection handler
     private HashMap<Integer, ConnectionHandler<T>> _connectionHandlers;
 

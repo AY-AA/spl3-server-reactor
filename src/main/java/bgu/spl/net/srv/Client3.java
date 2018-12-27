@@ -8,14 +8,14 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 
-public class Client1 implements Closeable,Runnable {
+public class Client3 implements Closeable,Runnable {
 
     private final bidiMessageEncoderDecoder encdec;
     private final Socket sock;
     private final BufferedInputStream in;
     private final BufferedOutputStream out;
 
-    public Client1(String host, int port) throws IOException {
+    public Client3(String host, int port) throws IOException {
         sock = new Socket(host, port);
         encdec = new bidiMessageEncoderDecoder();
         in = new BufferedInputStream(sock.getInputStream());
@@ -49,25 +49,21 @@ public class Client1 implements Closeable,Runnable {
     @Override
     public void run() {
         try {
-            send(new bidiMessages.bidiMessage("REGISTER avishai 1111"));
-//            System.out.println("POST avishai");
-
-            send(new bidiMessages.bidiMessage("LOGIN avishai 1111"));
-//            System.out.println("LOGIN avishai");
-
             Thread.currentThread().sleep(2000);
 
-            send(new bidiMessages.bidiMessage("FOLLOW 0 1 alex"));
-//            System.out.println("LOGIN avishai");
+            send(new bidiMessages.bidiMessage("LOGIN avishai 1111"));
 
-            send(new bidiMessages.bidiMessage("LOGOUT"));
+            send(new bidiMessages.bidiMessage("STAT alex"));
 
+
+//            send(new bidiMessages.bidiMessage("LOGOUT"));
 
 
 //            bidiMessages.bidiMessage msg = receive();
 
 
 
+//            System.out.println("avishai received : " + msg.getMsgToSend());
 
         } catch (IOException e) {
             e.printStackTrace();
