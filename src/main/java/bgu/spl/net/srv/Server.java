@@ -33,11 +33,6 @@ public interface Server<T> extends Closeable {
             @Override
             protected void execute(BlockingConnectionHandler<T>  handler) {
                 Thread t = new Thread(handler);
-                if (bidiMessagingProtocolImpl.a == 0)
-                    t.setName("AVISHAI");
-                else
-                    t.setName("ALEX");
-                bidiMessagingProtocolImpl.a ++;
                 new Thread(handler).start();
             }
         };

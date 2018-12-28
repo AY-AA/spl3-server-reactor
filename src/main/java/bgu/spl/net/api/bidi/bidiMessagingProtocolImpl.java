@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
-    public static int a= 0;
 
     private int _serverId, _dbId;
     private Connections<bidiMessages.bidiMessage> _connections;
