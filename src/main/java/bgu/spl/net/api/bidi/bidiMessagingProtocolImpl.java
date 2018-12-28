@@ -43,9 +43,6 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             case USERLIST:     { if (checkLogged(opcodeCommand)) userlist(message);     break;     }
             case STAT:         { if (checkLogged(opcodeCommand)) stat(message);         break;     }
             default:           {                                                        return;    }
-
-
-
         }
     }
 
