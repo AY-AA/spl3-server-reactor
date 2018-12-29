@@ -559,15 +559,32 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
         private void parseERROR() { _info.add(_content); }
 
+        /**
+         * Retrieves the info list
+         * @return List<String> of relevant information of the message
+         */
         public List<String> getRelevantInfo()
         {
             return _info;
         }
 
+        /**
+         * Retrieves the string of the message
+         * @return message content String
+         */
         public String getString(){ return _content; }
 
+        /**
+         * Retrieves the opcode of the message
+         * @return OpcodeCommand of the message
+         */
         public OpcodeCommand getOpcode(){ return _cmdType; }
 
+        /**
+         * Adds users which are included in the string into the list of information
+         * @param usersString String which include usernames
+         * @param numOfUsers the number of users in the {@param usersString}
+         */
         private void addUsers(String usersString, int numOfUsers) {
             for (int i = 0; i < numOfUsers - 1; i++) {
                 usersString = usersString.substring(usersString.indexOf(" ") + 1);
@@ -578,6 +595,9 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             _info.add(lastUsername);
         }
 
+        /**
+         * Adds two first words of the message into the information list
+         */
         private void addTwoFirstDetails() {
             String firstWord = _content.substring(0,_content.indexOf(" "));
             _info.add(firstWord);
