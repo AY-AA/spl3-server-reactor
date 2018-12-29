@@ -21,7 +21,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
                 _opcode.clear();
                 if (!hasMoreData) {
                     String res = _message.decodeNextByte(nextByte);
-                    _result = new bidiMessages.bidiMessage(_message,res);
+                    _result = new bidiMessages.bidiMessage(_message.getOpcode(),res);
                     cleanAll();
                 }
             }
@@ -29,7 +29,7 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
         else {
             String res =_message.decodeNextByte(nextByte);
             if (res != null) {
-                _result = new bidiMessages.bidiMessage(_message,res);
+                _result = new bidiMessages.bidiMessage(_message.getOpcode(),res);
                 cleanAll();
             }
         }
