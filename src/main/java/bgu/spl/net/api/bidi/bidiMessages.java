@@ -183,9 +183,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         private final ByteBuffer _followUnfollow = ByteBuffer.allocate(2);
         private List<String> _usersList = new ArrayList<>();
 
-        Follow() {
-
-        }
+        Follow() { }
 
         @Override
         public String decodeNextByte(byte nextByte) {
@@ -393,11 +391,13 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                     addBytesToVector(shortToBytes(numOfUsers));
                     for (int i = 0; i < numOfUsers -1 ; i++) {
                         message = message.substring(message.indexOf(" ") + 1);
-                        String currUsername = message.substring(0,message.indexOf(" ")) + _strDelimeter;
+                        String currUsername = message.substring(0,message.indexOf(" "));
                         addBytesToVector(currUsername.getBytes());
+                        _byteVector.add(_delimiter);
                     }
-                    String lastUsername = message.substring(message.indexOf(" ") + 1) + _strDelimeter;
+                    String lastUsername = message.substring(message.indexOf(" ") + 1);
                     addBytesToVector(lastUsername.getBytes());
+                    _byteVector.add(_delimiter);
                     break;
                 }
                 case 7: {
