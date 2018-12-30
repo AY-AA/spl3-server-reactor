@@ -17,13 +17,8 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             _result = null;
             _opcode.put(nextByte);
             if (!_opcode.hasRemaining()) { //we read 2 bytes and therefore can take the command type
-                boolean hasMoreData = parseCommand();
+                parseCommand();
                 _opcode.clear();
-                if (!hasMoreData) {
-                    String res = _message.decodeNextByte(nextByte);
-                    _result = new bidiMessages.bidiMessage(_message.getOpcode(),res);
-                    cleanAll();
-                }
             }
         }
         else {
@@ -36,22 +31,21 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
         return _result;
     }
 
-    private boolean parseCommand() {
+    private void parseCommand() {
         short commandIndex = bytesToShort(_opcode.array());
         OpcodeCommand opcodeCommand = OpcodeCommand.values()[commandIndex];
         switch (opcodeCommand){
-            case REGISTER:      { _message = new bidiMessages.RegisterLogin((short)1); return true; }
-            case LOGIN:         { _message = new bidiMessages.RegisterLogin((short)2); return true; }
-            case LOGOUT:        { _message = new bidiMessages.Logout();                return false;}
-            case FOLLOW:        { _message = new bidiMessages.Follow();                return true; }
-            case POST:          { _message = new bidiMessages.Post();                  return true; }
-            case PM:            { _message = new bidiMessages.PM();                    return true; }
-            case USERLIST:      { _message = new bidiMessages.Userlist();              return false;}
-            case STAT:          { _message = new bidiMessages.Stat();                  return true; }
-            case NOTIFICATION:  { _message = new bidiMessages.Notification();          return true; }
-            case ACK:           { _message = new bidiMessages.ACK();                   return true; }
-            case ERROR:         { _message = new bidiMessages.Error();                 return true; }
-            default:            return true;
+            case REGISTER:      { _message = new bidiMessages.RegisterLogin((short)1); break;}
+            case LOGIN:         { _message = new bidiMessages.RegisterLogin((short)2); break;}
+            case LOGOUT:        { _message = new bidiMessages.Logout();                break;}
+            case FOLLOW:        { _message = new bidiMessages.Follow();                break;}
+            case POST:          { _message = new bidiMessages.Post();                  break;}
+            case PM:            { _message = new bidiMessages.PM();                    break;}
+            case USERLIST:      { _message = new bidiMessages.Userlist();              break;}
+            case STAT:          { _message = new bidiMessages.Stat();                  break;}
+            case NOTIFICATION:  { _message = new bidiMessages.Notification();          break;}
+            case ACK:           { _message = new bidiMessages.ACK();                   break;}
+            case ERROR:         { _message = new bidiMessages.Error();                 break;}
         }
     }
 

@@ -366,13 +366,19 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             message = message.trim();
 
             addBytesToVector(shortToBytes(_opcode));
-            if (!message.isEmpty()) {
-                short opcode = Short.parseShort(message.substring(0, message.indexOf(" ")));
-                _caseType = opcode;
-                addBytesToVector(shortToBytes(opcode));
 
-                encodeByCase(message);
-            }
+            short opcode;
+
+            if (message.contains(" "))
+                opcode = Short.parseShort(message.substring(0, message.indexOf(" ")));
+            else
+                opcode = Short.parseShort(message);
+
+            _caseType = opcode;
+            addBytesToVector(shortToBytes(opcode));
+
+            encodeByCase(message);
+
             byte[] resultBytes = new byte[_byteVector.size()];
             addBytes(resultBytes);
             return resultBytes;
@@ -409,11 +415,11 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                             currShort = Short.parseShort(message.substring(0,message.indexOf(" ")));
                         addBytesToVector(shortToBytes(currShort));
                     }
-                    addBytesToVector("'\0'".getBytes());
+                    _byteVector.add(_delimiter);
                     break;
                 }
                 default:{
-                    addBytesToVector("'\0'".getBytes());
+                    _byteVector.add(_delimiter);
                     break;
                 }
             }
@@ -434,16 +440,11 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         @Override
         public byte[] encode(String message) {
             message = message.trim();
-            int i = 0;
-            short msgOpcode = 0;
-            for (OpcodeCommand opcodeCommand : OpcodeCommand.values()) {
-                if (opcodeCommand.toString().equals(message))
-                    msgOpcode = (short)i;
-                i ++ ;
-            }
+            short msgOpcode = Short.parseShort(message);
             _byteVector.clear();
             addBytesToVector(shortToBytes(_opcode));
             addBytesToVector(shortToBytes(msgOpcode));
+            _byteVector.add(_delimiter);
             byte[] ans = new byte[_byteVector.size()];
             addBytes(ans);
             return ans;
@@ -604,8 +605,10 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
 
             String tmp = _content.substring(_content.indexOf(" ") +1);
 
-            String secondWord = tmp.substring(0,tmp.indexOf(" "));
-            _info.add(secondWord);
+            if (tmp.contains(" "))
+                _info.add(tmp.substring(0,tmp.indexOf(" ")));
+            else
+                _info.add(tmp);
         }
 
     }
