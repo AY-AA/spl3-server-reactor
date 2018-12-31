@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
 
@@ -202,7 +203,8 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     private void post(bidiMessages.bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);       // msg index is 0 and usernames index is i > 0
-        Set<Integer> sendTo = _database.getFollowers(_dbId);
+        Set<Integer> sendTo = new ConcurrentSkipListSet<>();
+        sendTo.addAll(_database.getFollowers(_dbId));
         if (info.size() > 1) {          // has more users to send
             for (int i =1 ; i< info.size(); i++) {      // finds all usernames appear in message after '@'
                 String currUser = info.get(i);
