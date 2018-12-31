@@ -402,7 +402,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
                 }
                 case 7: {
                     _caseType = 4;
-                    encode(message);
+                    encodeByCase(message);
                     break;
                 }
                 case 8: {
