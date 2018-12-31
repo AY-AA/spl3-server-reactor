@@ -329,7 +329,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             addBytesToVector(shortToBytes(_opcode));
 
             String pmPublic = message.substring(0,message.indexOf(" "));
-            if (pmPublic.equals("PM"))
+            if (pmPublic.equals("0"))
                 _byteVector.add((byte)0);
             else
                 _byteVector.add((byte)1);
