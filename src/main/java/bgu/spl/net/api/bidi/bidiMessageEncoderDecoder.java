@@ -110,6 +110,8 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
             {   _message = new bidiMessages.ACK();                      break;}
             case "ERROR":
             {   _message = new bidiMessages.Error();                    break;}
+            case "9":       // awaiting message
+            {   _message = new bidiMessages.Notification();             break;}
         }
     }
 

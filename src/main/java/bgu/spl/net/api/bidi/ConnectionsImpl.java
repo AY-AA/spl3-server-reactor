@@ -23,8 +23,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
     {
         ConnectionHandler connectionHandler = _connectionHandlers.get(connectionId);
         if (connectionHandler != null && msg != null) {
-            connectionHandler.send(msg);
-            return true;
+            synchronized (connectionHandler) {
+                if (connectionHandler == null)
+                    return false;
+                connectionHandler.send(msg);
+                return true;
+            }
         }
         return false;
     }
@@ -32,7 +36,9 @@ public class ConnectionsImpl<T> implements Connections<T> {
     @Override
     public void broadcast(T msg) {
         for (ConnectionHandler connectionHandler : _connectionHandlers.values())
-            connectionHandler.send(msg);
+            synchronized (connectionHandler) {
+                connectionHandler.send(msg);
+            }
     }
 
     @Override
