@@ -24,7 +24,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         ConnectionHandler connectionHandler = _connectionHandlers.get(connectionId);
         if (connectionHandler != null && msg != null) {
             synchronized (connectionHandler) {
-                if (connectionHandler == null)
+                if (!_connectionHandlers.values().contains(connectionHandler))
                     return false;
                 connectionHandler.send(msg);
                 return true;

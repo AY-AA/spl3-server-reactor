@@ -160,7 +160,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         sendACK("3");
         _connections.disconnect(_serverId);
         _loggedIn = false;
-        _database.disconnect(_serverId);
+        _database.disconnect(_serverId,_username);
         _shouldTerminate = true;
     }
 
@@ -213,7 +213,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         }   //sends the message to all users
         for (Integer currUserDBID : sendTo) {
             int currUserServerID = _database.getServerID(currUserDBID);
-            if (!_connections.send(currUserServerID, createNotification(msg,false)))
+            if (currUserDBID == -2 || !_connections.send(currUserServerID, createNotification(msg,false)))
                 _database.sendOfflineMsg(currUserDBID, createNotification(msg, false));
         }
         _database.addPostCount(_dbId);
@@ -229,7 +229,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
             sendError("6");
             return;
         }
-        else if (!_connections.send(usernameServerID,createNotification(content, true))) {
+        else if (usernameDBID == -2 || !_connections.send(usernameServerID,createNotification(content, true))) {
             _database.sendOfflineMsg(usernameDBID, createNotification(content, true));
         }
         sendACK("6");

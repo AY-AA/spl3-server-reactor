@@ -66,7 +66,7 @@ public class ServerDB{
 
         // data structures init
         int userID = lastKnown +1;
-        _serverDatabaseID.put(serverId,userID);
+        _serverDatabaseID.put(serverId,-2);
         _usernamesIds.put(username,userID);
         _numOfMsgsSentByUser.put(userID,0);
         _usernamesAwaitingMsgs.put(userID, new LinkedBlockingQueue<>());
@@ -89,7 +89,8 @@ public class ServerDB{
         return -1;
     }
 
-    public void disconnect(int serverID){
+    public void disconnect(int serverID, String username){
+      //  _usernamesIds.put(username, -2);
         _serverDatabaseID.remove(serverID);
     }
 
