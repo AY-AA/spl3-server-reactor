@@ -518,7 +518,13 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             }
         }
 
-        private void parsePM() { addTwoFirstDetails(); }
+        private void parsePM() {
+            String sender = _content.substring(0,_content.indexOf(" "));
+            _info.add(sender);
+
+            String content = _content.substring(_content.indexOf(" ") +1);
+            _info.add(content);
+        }
 
         private void parseStat() {
             _info.add(_content);

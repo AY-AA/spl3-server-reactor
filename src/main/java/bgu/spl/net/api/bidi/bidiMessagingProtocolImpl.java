@@ -208,7 +208,9 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         if (info.size() > 1) {          // has more users to send
             for (int i =1 ; i< info.size(); i++) {      // finds all usernames appear in message after '@'
                 String currUser = info.get(i);
-                sendTo.add(_database.getId(currUser));
+                int currUserID = _database.getId(currUser);
+                if (currUserID != -1)
+                    sendTo.add(currUserID);
             }
         }   //sends the message to all users
         for (Integer currUserDBID : sendTo) {
