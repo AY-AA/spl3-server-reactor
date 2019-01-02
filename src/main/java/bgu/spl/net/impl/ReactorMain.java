@@ -11,9 +11,12 @@ public class ReactorMain{
 
         ServerDB _database = new ServerDB();
 
+        int port =  Integer.parseInt(args[0]);
+        int numOfThreads = Integer.parseInt(args[1]);
+
         Server.reactor(
-                Runtime.getRuntime().availableProcessors(),
-                7777, //port
+                numOfThreads,
+                port, //port
                 () ->  new bidiMessagingProtocolImpl(_database), //protocol factory
                 bidiMessageEncoderDecoder::new //message encoder decoder factory
         ).serve();

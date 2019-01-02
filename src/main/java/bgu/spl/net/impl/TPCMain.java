@@ -10,9 +10,10 @@ public class TPCMain {
     public static void main(String[] args) {
 
         ServerDB _database = new ServerDB();
+        int port =  Integer.parseInt(args[0]);
 
         Server.threadPerClient(
-                7777, //port
+                port, //port
                 () -> new bidiMessagingProtocolImpl(_database), //protocol factory
                 () -> new bidiMessageEncoderDecoder() //message encoder decoder factory
         ).serve();
