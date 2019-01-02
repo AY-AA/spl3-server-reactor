@@ -1,7 +1,6 @@
 package bgu.spl.net.api.bidi;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
-import org.omg.CORBA.IMP_LIMIT;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -19,7 +18,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
     protected int _numOfDelimiters;
     protected Vector<Byte> _byteVector = new Vector<>();
 
-    protected String _string = "";
+    protected String _message = "";
 
 
     /**
@@ -43,7 +42,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
         if (nextByte == _delimiter) {
             _numOfDelimiters--;
             if (_numOfDelimiters == 0) {
-                return _string;
+                return _message;
             }
         }
         else {
@@ -121,7 +120,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         bidiCommands messages = (bidiCommands) o;
-        return Objects.equals(_string, messages._string);
+        return Objects.equals(_message, messages._message);
     }
 
     /**
@@ -141,10 +140,10 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
             if (nextByte == _delimiter){
                 String str = bytesToString();
                 if (_numOfDelimiters == 2) {
-                    _string += str;
+                    _message += str;
                 }
                 else {
-                    _string += " " + str;
+                    _message += " " + str;
                 }
             }
             return super.decodeNextByte(nextByte);
@@ -195,7 +194,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
             }
             else if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string += " " + str;
+                _message += " " + str;
                 _usersList.add(str);
             }
             return super.decodeNextByte(nextByte);
@@ -203,9 +202,9 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
 
         private void updateFollowUnfollow(byte nextByte) {
             if (nextByte == '1' || nextByte == (byte)1)
-                _string += " 1";
+                _message += " 1";
             else
-                _string += " 0";
+                _message += " 0";
             _followUnfollowFound = true;
             _byteVector.clear();
         }
@@ -217,7 +216,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
                 short numOfUsers = bytesToShort(_numOfUsers.array());
                 _numOfDelimiters = numOfUsers;
                 _foundNumOfUsers = true;
-                _string += " " + numOfUsers;
+                _message += " " + numOfUsers;
                 _byteVector.clear();
             }
         }
@@ -238,11 +237,11 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
             if (nextByte == _delimiter){
                 String str = bytesToString();
                 if (_firstDelimiter ){
-                    _string += str;
+                    _message += str;
                     _firstDelimiter = false;
                 }
                 else
-                    _string += " " + str;
+                    _message += " " + str;
             }
             return super.decodeNextByte(nextByte);
         }
@@ -263,9 +262,9 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
             if (nextByte == _delimiter){
                 String str = bytesToString();
                 if (!_firstDelimiter)
-                    _string += " " + str;
+                    _message += " " + str;
                 else{
-                    _string += str;
+                    _message += str;
                     _firstDelimiter = false;
                 }
             }
@@ -301,7 +300,7 @@ public abstract class bidiCommands implements MessageEncoderDecoder<String> {
         public String decodeNextByte(byte nextByte) {
             if (nextByte == _delimiter){
                 String str = bytesToString();
-                _string += str;
+                _message += str;
             }
             return super.decodeNextByte(nextByte);
         }

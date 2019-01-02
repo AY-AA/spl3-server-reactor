@@ -1,23 +1,15 @@
-package bgu.spl.net.srv.bidi;
+package bgu.spl.net.impl;
 
 import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
 import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
 import bgu.spl.net.srv.Server;
+import bgu.spl.net.srv.bidi.ServerDB;
 
-public class bidiServerMain{
+public class ReactorMain{
 
     public static void main(String[] args) {
 
-        ServerDB _database = new ServerDB(); // maybe remove and bidiMessagingProtocolImpl gets new ?
-
-// you can use any server...
-//        Server.threadPerClient(
-//                7777, //port
-//                () -> new bidiMessagingProtocolImpl(_database), //protocol factory
-//                () -> new bidiMessageEncoderDecoder() //message encoder decoder factory
-//        ).serve();
-
-
+        ServerDB _database = new ServerDB();
 
         Server.reactor(
                 Runtime.getRuntime().availableProcessors(),
