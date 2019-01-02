@@ -178,9 +178,8 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     public static class Follow extends bidiMessages {
 
         private boolean _foundNumOfUsers, _followUnfollowFound = false;
-        private int _counter = 0; // counts number of times reached here to know whether numOfUsers has been reached
+        private int _counter = 1; // counts number of times reached here to know whether numOfUsers has been reached
         private final ByteBuffer _numOfUsers = ByteBuffer.allocate(2);
-        private final ByteBuffer _followUnfollow = ByteBuffer.allocate(2);
         private List<String> _usersList = new ArrayList<>();
 
         Follow() { }
@@ -190,7 +189,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
             _counter ++;
             if (!_followUnfollowFound)
                 updateFollowUnfollow(nextByte);
-            else if (!_foundNumOfUsers && _counter > 1) {
+            else if (!_foundNumOfUsers) {
                 findNumOfUsers(nextByte);
                 return null;
             }
@@ -203,14 +202,12 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
         }
 
         private void updateFollowUnfollow(byte nextByte) {
-            _followUnfollow.put(nextByte);
-            if (!_followUnfollow.hasRemaining()) {
-                short followUnfollow = bytesToShort(_followUnfollow.array());
-                _followUnfollowFound = true;
-                _byteVector.add(nextByte);
-                _string += " " + followUnfollow;
-                _byteVector.clear();
-            }
+            if (nextByte == '1' || nextByte == (byte)1)
+                _string += " 1";
+            else
+                _string += " 0";
+            _followUnfollowFound = true;
+            _byteVector.clear();
         }
 
         private void findNumOfUsers(byte nextByte) {

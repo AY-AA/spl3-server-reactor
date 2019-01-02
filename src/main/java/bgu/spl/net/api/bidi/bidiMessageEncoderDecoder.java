@@ -37,7 +37,11 @@ public class bidiMessageEncoderDecoder implements MessageEncoderDecoder<bidiMess
         switch (opcodeCommand){
             case REGISTER:      { _message = new bidiMessages.RegisterLogin((short)1); break;}
             case LOGIN:         { _message = new bidiMessages.RegisterLogin((short)2); break;}
-            case LOGOUT:        { _message = new bidiMessages.Logout();                break;}
+            case LOGOUT:        { _message = new bidiMessages.Logout();
+                                    String res = _message.decodeNextByte((byte)0);
+                                    _result =  new bidiMessages.bidiMessage(_message.getOpcode(),res);
+                                    cleanAll();
+                                    break;                                                   }
             case FOLLOW:        { _message = new bidiMessages.Follow();                break;}
             case POST:          { _message = new bidiMessages.Post();                  break;}
             case PM:            { _message = new bidiMessages.PM();                    break;}
