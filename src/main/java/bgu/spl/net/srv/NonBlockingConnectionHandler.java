@@ -126,7 +126,6 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<bidiMe
     @Override
     public void send(bidiMessage msg) {
         writeQueue.add(ByteBuffer.wrap(encdec.encode(msg)));
-        System.out.println(msg.getString());
     }
 
 }
