@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * bidiMessages defines the class which encode and decode messages in the server
  */
-public abstract class bidiMessages implements MessageEncoderDecoder<String> {
+public abstract class bidiCommands implements MessageEncoderDecoder<String> {
 
     protected final String ENCODING = "utf-8";
     protected final byte _delimiter = '\0';
@@ -120,14 +120,14 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        bidiMessages messages = (bidiMessages) o;
+        bidiCommands messages = (bidiCommands) o;
         return Objects.equals(_string, messages._string);
     }
 
     /**
      * A class represents the Register or Login message delivered from the client
      */
-    public static class RegisterLogin extends bidiMessages {
+    public static class RegisterLogin extends bidiCommands {
 
         private short _opcode;
 
@@ -162,7 +162,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Logout message delivered from the client
      */
-    public static class Logout extends bidiMessages {
+    public static class Logout extends bidiCommands {
 
         public Logout() { }
 
@@ -175,7 +175,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Follow message delivered from the client
      */
-    public static class Follow extends bidiMessages {
+    public static class Follow extends bidiCommands {
 
         private boolean _foundNumOfUsers, _followUnfollowFound = false;
         private int _counter = 1; // counts number of times reached here to know whether numOfUsers has been reached
@@ -228,7 +228,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Post message delivered from the client
      */
-    public static class Post extends bidiMessages {
+    public static class Post extends bidiCommands {
         private boolean _firstDelimiter = true;
 
         Post(){ _numOfDelimiters = 1; }
@@ -253,7 +253,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the PM message delivered from the client
      */
-    public static class PM extends bidiMessages {
+    public static class PM extends bidiCommands {
         private boolean _firstDelimiter = true;
 
         PM() { _numOfDelimiters = 2; }
@@ -278,7 +278,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Userlist message delivered from the client
      */
-    public static class Userlist extends bidiMessages {
+    public static class Userlist extends bidiCommands {
 
         Userlist(){
         }
@@ -293,7 +293,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Stat message delivered from the client
      */
-    public static class Stat extends bidiMessages {
+    public static class Stat extends bidiCommands {
 
         public Stat() { _numOfDelimiters =1 ; }
 
@@ -312,7 +312,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the Notification message sent by the server
      */
-    public static class Notification extends bidiMessages {
+    public static class Notification extends bidiCommands {
 
         private final short _opcode = 9;
 
@@ -349,7 +349,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents the ACK message sent by the server
      */
-    public static class ACK extends bidiMessages{
+    public static class ACK extends bidiCommands{
         private int _caseType = 0;              // 4 - follow, userlist | 8 - stat
         private final short _opcode = 10;
 
@@ -428,7 +428,7 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     /**
      * A class represents theError message sent by the server
      */
-    public static class Error extends bidiMessages {
+    public static class Error extends bidiCommands {
 
         private final short _opcode = 11;
 
@@ -452,167 +452,4 @@ public abstract class bidiMessages implements MessageEncoderDecoder<String> {
     }
 
 
-    /**
-     * A message which is being sent by client and server to each other
-     */
-    public static class bidiMessage
-    {
-        private OpcodeCommand _cmdType = OpcodeCommand.NULL;
-        private List<String> _info;
-        private String _content;
-
-        public bidiMessage(OpcodeCommand opcode, String result){
-            _cmdType = opcode;
-            _content = result.trim();
-            parseResult();
-        }
-
-        public bidiMessage(String toEncode) { _content = toEncode.trim(); }
-
-        /**
-         * Calling parse method of message which its opcode is _opcode
-         */
-        private void parseResult() {
-            // init info list
-            _info = new ArrayList<>();
-            switch (_cmdType.toString()) {
-                case "REGISTER":        { parseRegisterLogin(); break;}
-                case "LOGIN":           { parseRegisterLogin(); break;}
-                case "FOLLOW":          { parseFollow();        break;}
-                case "POST":            { parsePost();          break;}
-                case "PM":              { parsePM();            break;}
-                case "STAT":            { parseStat();          break;}
-                case "NOTIFICATION":    { parseNotification();  break;}
-                case "ACK":             { parseACK();           break;}
-                case "ERROR":           { parseERROR();         break;}
-            }
-        }
-
-        private void parseRegisterLogin() { addTwoFirstDetails(); }
-
-        private void parseFollow() {
-
-            addTwoFirstDetails();
-
-            String tmp = _content.substring(_content.indexOf(" ") +1);
-            addUsers(tmp,Integer.parseInt(tmp.substring(0,tmp.indexOf(" "))));
-        }
-
-        private void parsePost() {
-            _info.add(_content);
-
-            String tmp = _content;
-            while (tmp.contains("@"))
-            {
-                tmp = tmp.substring(tmp.indexOf("@") + 1);
-                int nextSpace = tmp.indexOf(" ");
-                if (nextSpace != -1) {
-                    _info.add(tmp.substring(0, nextSpace));
-                }
-                else {
-                    _info.add(tmp);
-                }
-            }
-        }
-
-        private void parsePM() {
-            String sender = _content.substring(0,_content.indexOf(" "));
-            _info.add(sender);
-
-            String content = _content.substring(_content.indexOf(" ") +1);
-            _info.add(content);
-        }
-
-        private void parseStat() {
-            _info.add(_content);
-        }
-
-        private void parseNotification() {
-            addTwoFirstDetails();
-
-            String tmp = _content.substring(_content.indexOf(" ") +1);
-            String msgContent = tmp.substring(tmp.indexOf(" ") +1);
-            _info.add(msgContent);
-        }
-
-        private void parseACK() {
-            _info.add(_content.substring(0,1));
-
-            // in case it is follow, userlist or stat ACK
-            int opcode = Integer.parseInt(_content.substring(0,1));
-            String currString = _content;
-            if (opcode == 4 || opcode == 7) // follow , userlist
-            {
-                currString = currString.substring(currString.indexOf(" ") + 1);
-                String numOfUsers = currString.substring(0 , currString.indexOf(" "));
-                _info.add(numOfUsers);
-
-                addUsers(currString, Integer.parseInt(numOfUsers));
-            }
-            else if (opcode == 8) // stat
-            {
-                for (int i =0 ; i< 3 ; i++){
-                    currString = currString.substring(_content.indexOf(" ") + 1);
-                    if (i != 2)
-                        _info.add(currString.substring(0, currString.indexOf(" ")));
-                    else
-                        _info.add(currString);
-                }
-            }
-        }
-
-        private void parseERROR() { _info.add(_content); }
-
-        /**
-         * Retrieves the info list
-         * @return List<String> of relevant information of the message
-         */
-        public List<String> getRelevantInfo()
-        {
-            return _info;
-        }
-
-        /**
-         * Retrieves the string of the message
-         * @return message content String
-         */
-        public String getString(){ return _content; }
-
-        /**
-         * Retrieves the opcode of the message
-         * @return OpcodeCommand of the message
-         */
-        public OpcodeCommand getOpcode(){ return _cmdType; }
-
-        /**
-         * Adds users which are included in the string into the list of information
-         * @param usersString String which include usernames
-         * @param numOfUsers the number of users in the {@param usersString}
-         */
-        private void addUsers(String usersString, int numOfUsers) {
-            for (int i = 0; i < numOfUsers - 1; i++) {
-                usersString = usersString.substring(usersString.indexOf(" ") + 1);
-                String username = usersString.substring(0 , usersString.indexOf(" "));
-                _info.add(username);
-            }
-            String lastUsername = usersString.substring(usersString.indexOf(" ") + 1);
-            _info.add(lastUsername);
-        }
-
-        /**
-         * Adds two first words of the message into the information list
-         */
-        private void addTwoFirstDetails() {
-            String firstWord = _content.substring(0,_content.indexOf(" "));
-            _info.add(firstWord);
-
-            String tmp = _content.substring(_content.indexOf(" ") +1);
-
-            if (tmp.contains(" "))
-                _info.add(tmp.substring(0,tmp.indexOf(" ")));
-            else
-                _info.add(tmp);
-        }
-
-    }
 }

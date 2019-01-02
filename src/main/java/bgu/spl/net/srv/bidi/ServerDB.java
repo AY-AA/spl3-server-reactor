@@ -1,10 +1,7 @@
 package bgu.spl.net.srv.bidi;
 
-import bgu.spl.net.api.bidi.bidiMessages;
+import bgu.spl.net.api.bidi.bidiMessage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +12,7 @@ public class ServerDB{
     private ConcurrentHashMap<String,Integer> _usernamesIds;
 
     // A data structure to hold all usernames id and their awaiting public msgs which were retrieved while they were offline
-    private ConcurrentHashMap<Integer, BlockingQueue<bidiMessages.bidiMessage>> _usernamesAwaitingMsgs;
+    private ConcurrentHashMap<Integer, BlockingQueue<bidiMessage>> _usernamesAwaitingMsgs;
 
     // A data structure to hold all server username id and its DB username id
     private ConcurrentHashMap<Integer,Integer> _serverDatabaseID;
@@ -172,7 +169,7 @@ public class ServerDB{
     }
 
 
-    public void sendOfflineMsg(int usernameToSend, bidiMessages.bidiMessage notification) {
+    public void sendOfflineMsg(int usernameToSend, bidiMessage notification) {
         if (!_usernamesAwaitingMsgs.get(usernameToSend).contains(notification)){
             //msg was already sent
             // it can happen in case username follows and gets this message
@@ -181,7 +178,7 @@ public class ServerDB{
         }
     }
 
-    public bidiMessages.bidiMessage getAwaitingMsg(int dbId) {
+    public bidiMessage getAwaitingMsg(int dbId) {
         if (_usernamesAwaitingMsgs.get(dbId).isEmpty())
             return null;
         return _usernamesAwaitingMsgs.get(dbId).poll();

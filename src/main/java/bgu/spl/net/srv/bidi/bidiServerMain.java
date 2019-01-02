@@ -1,10 +1,8 @@
 package bgu.spl.net.srv.bidi;
 
 import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
-import bgu.spl.net.api.bidi.bidiMessages;
 import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
 import bgu.spl.net.srv.Server;
-import bgu.spl.net.srv.bidi.ServerDB;
 
 public class bidiServerMain{
 

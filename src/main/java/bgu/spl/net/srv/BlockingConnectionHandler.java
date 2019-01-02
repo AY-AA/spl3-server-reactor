@@ -8,13 +8,13 @@ import java.net.Socket;
 
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
 import bgu.spl.net.api.bidi.Connections;
-import bgu.spl.net.api.bidi.bidiMessages;
+import bgu.spl.net.api.bidi.bidiMessage;
 import bgu.spl.net.srv.bidi.ConnectionHandler;
 
-public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler<bidiMessages.bidiMessage> {
+public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler<bidiMessage> {
 
-    private final BidiMessagingProtocol<bidiMessages.bidiMessage> protocol;
-    private final MessageEncoderDecoder<bidiMessages.bidiMessage> encdec;
+    private final BidiMessagingProtocol<bidiMessage> protocol;
+    private final MessageEncoderDecoder<bidiMessage> encdec;
     private final Socket sock;
     private final int ID;
     private final Connections CONNECTIONS;
@@ -23,8 +23,8 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     private volatile boolean connected = true;
 
     public BlockingConnectionHandler(int id, Connections connections,Socket sock,
-                                     MessageEncoderDecoder<bidiMessages.bidiMessage> reader,
-                                     BidiMessagingProtocol<bidiMessages.bidiMessage> protocol) {
+                                     MessageEncoderDecoder<bidiMessage> reader,
+                                     BidiMessagingProtocol<bidiMessage> protocol) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
@@ -43,7 +43,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             out = new BufferedOutputStream(sock.getOutputStream());
 
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
-                bidiMessages.bidiMessage nextMessage = encdec.decodeNextByte((byte) read);
+                bidiMessage nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
                     protocol.process(nextMessage);
                 }
@@ -62,9 +62,9 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     }
 
     @Override
-    public void send(bidiMessages.bidiMessage msg) {
+    public void send(bidiMessage msg) {
         try {
-            System.out.println("sneding " + msg.getString());
+            System.out.println(msg.getString());
             out.write(encdec.encode(msg));
             out.flush();
         } catch (IOException e) {

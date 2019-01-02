@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessages.bidiMessage> {
+public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMessage> {
 
     private int _serverId, _dbId;
-    private Connections<bidiMessages.bidiMessage> _connections;
+    private Connections<bidiMessage> _connections;
     private boolean _shouldTerminate, _loggedIn;
     private ServerDB _database;
     private String _username;
@@ -22,14 +22,14 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     @Override
-    public void start(int connectionId, Connections<bidiMessages.bidiMessage> connections) {
+    public void start(int connectionId, Connections<bidiMessage> connections) {
         _serverId = connectionId;
         _connections = connections;
         _loggedIn = _shouldTerminate = false;
     }
 
     @Override
-    public void process(bidiMessages.bidiMessage message) {
+    public void process(bidiMessage message) {
         if (message.getRelevantInfo() == null)
             return;
         OpcodeCommand opcodeCommand = message.getOpcode();
@@ -121,7 +121,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         return _shouldTerminate;
     }
 
-    private void register(bidiMessages.bidiMessage message) {
+    private void register(bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
 
@@ -133,7 +133,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         }
     }
 
-    private void login(bidiMessages.bidiMessage message) {
+    private void login(bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String password = message.getRelevantInfo().get(1);
         int dbResponse = _database.login(_serverId,username,password);
@@ -149,14 +149,14 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void sendAwaitingMsgs() {
-        bidiMessages.bidiMessage missingMsg = _database.getAwaitingMsg(_dbId);
+        bidiMessage missingMsg = _database.getAwaitingMsg(_dbId);
         while (missingMsg != null) {
             _connections.send(_serverId,missingMsg);
             missingMsg = _database.getAwaitingMsg(_dbId);
         }
     }
 
-    private void logout(bidiMessages.bidiMessage message) {
+    private void logout(bidiMessage message) {
         sendACK("3");
         _connections.disconnect(_serverId);
         _loggedIn = false;
@@ -164,7 +164,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         _shouldTerminate = true;
     }
 
-    private void follow(bidiMessages.bidiMessage message) {
+    private void follow(bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         int followUnfollowInt = Integer.parseInt(info.get(0));
         int numOfUsers = Integer.parseInt(info.get(1));
@@ -200,7 +200,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         }
     }
 
-    private void post(bidiMessages.bidiMessage message) {
+    private void post(bidiMessage message) {
         List<String> info = message.getRelevantInfo();
         String msg = info.get(0);       // msg index is 0 and usernames index is i > 0
         Set<Integer> sendTo = new ConcurrentSkipListSet<>();
@@ -222,7 +222,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         sendACK("5");
     }
 
-    private void pm(bidiMessages.bidiMessage message) {
+    private void pm(bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         String content = message.getRelevantInfo().get(1);
         int usernameDBID = _database.getId(username);
@@ -237,13 +237,13 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         sendACK("6");
     }
 
-    private void userlist(bidiMessages.bidiMessage message) {
+    private void userlist(bidiMessage message) {
 
         String registeredUsersString = _database.getRegisteredUsers();
         sendACK("7 " + registeredUsersString);
     }
 
-    private void stat(bidiMessages.bidiMessage message) {
+    private void stat(bidiMessage message) {
         String username = message.getRelevantInfo().get(0);
         int usernameId = _database.getId(username);
         if (usernameId == -1) {
@@ -258,22 +258,22 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
     }
 
     private void sendError(String s) {
-        bidiMessages.bidiMessage msg = new bidiMessages.bidiMessage("ERROR " + s);
+        bidiMessage msg = new bidiMessage("11 " + s);
         _connections.send(_serverId,msg);
     }
 
     private void sendACK(String s) {
-        bidiMessages.bidiMessage msg = new bidiMessages.bidiMessage("ACK " + s);
+        bidiMessage msg = new bidiMessage("10 " + s);
         _connections.send(_serverId,msg);
     }
 
-    private bidiMessages.bidiMessage createNotification(String msg, boolean isPm) {
+    private bidiMessage createNotification(String msg, boolean isPm) {
         StringBuilder stringBuilder = new StringBuilder();
         if (isPm)
             stringBuilder.append("9 0 ");
         else
             stringBuilder.append("9 1 ");
         stringBuilder.append(_username + " " + msg);
-        return new bidiMessages.bidiMessage(stringBuilder.toString());
+        return new bidiMessage(stringBuilder.toString());
     }
 }
