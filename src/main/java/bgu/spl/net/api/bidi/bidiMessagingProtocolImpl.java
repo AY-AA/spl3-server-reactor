@@ -26,6 +26,7 @@ public class bidiMessagingProtocolImpl implements BidiMessagingProtocol<bidiMess
         _serverId = connectionId;
         _connections = connections;
         _loggedIn = _shouldTerminate = false;
+
     }
 
     @Override

@@ -53,7 +53,7 @@ public abstract class BaseServer<T> implements Server<T> {
                 while (!_lastId.compareAndSet(lastID,lastID+1))
                     lastID = _lastId.get();
 
-                BlockingConnectionHandler<T> handler = new BlockingConnectionHandler(
+                BlockingConnectionHandler handler = new BlockingConnectionHandler(
                         lastID+1,
                         _connections,
                         clientSock,

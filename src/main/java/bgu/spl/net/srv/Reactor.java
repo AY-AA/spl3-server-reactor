@@ -2,6 +2,9 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.api.bidi.ConnectionsImpl;
+import bgu.spl.net.api.bidi.bidiMessage;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -11,6 +14,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class Reactor<T> implements Server<T> {
@@ -20,6 +24,9 @@ public class Reactor<T> implements Server<T> {
     private final Supplier<MessageEncoderDecoder<T>> readerFactory;
     private final ActorThreadPool pool;
     private Selector selector;
+    private AtomicInteger _lastId;          // there's an unique id for each connection
+    private Connections<T> _connections;
+
 
     private Thread selectorThread;
     private final ConcurrentLinkedQueue<Runnable> selectorTasks = new ConcurrentLinkedQueue<>();
@@ -34,6 +41,9 @@ public class Reactor<T> implements Server<T> {
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.readerFactory = readerFactory;
+        _connections = new ConnectionsImpl();
+        _lastId = new AtomicInteger(0);
+
     }
 
     @Override
@@ -96,11 +106,15 @@ public class Reactor<T> implements Server<T> {
     private void handleAccept(ServerSocketChannel serverChan, Selector selector) throws IOException {
         SocketChannel clientChan = serverChan.accept();
         clientChan.configureBlocking(false);
-        final NonBlockingConnectionHandler<T> handler = new NonBlockingConnectionHandler<>(
+        int lastID = _lastId.get();
+        while (!_lastId.compareAndSet(lastID,lastID+1))
+            lastID = _lastId.get();
+        final NonBlockingConnectionHandler handler = new NonBlockingConnectionHandler(
                 readerFactory.get(),
                 protocolFactory.get(),
                 clientChan,
-                this);
+                this, _connections, lastID + 1);
+        ((ConnectionsImpl)_connections).addConnection(lastID + 1,handler);
         clientChan.register(selector, SelectionKey.OP_READ, handler);
     }
 
