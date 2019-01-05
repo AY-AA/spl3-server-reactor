@@ -32,6 +32,7 @@ public class ServerDB{
     private AtomicInteger _newestId;
 
     private ConcurrentSkipListSet<String> _loggedInUsers;
+    private ConcurrentLinkedQueue<String> _registeredUsers;
 
     public ServerDB()
     {
@@ -40,7 +41,7 @@ public class ServerDB{
         _usernamePassword = new ConcurrentHashMap<>();
         _followings = new ConcurrentHashMap<>();
         _followers = new ConcurrentHashMap<>();
-//        _usernamesAwaitingPmMsgs = new HashMap<>();
+        _registeredUsers = new ConcurrentLinkedQueue<>();
         _serverDatabaseID = new ConcurrentHashMap<>();
         _numOfMsgsSentByUser = new ConcurrentHashMap<>();
         _newestId = new AtomicInteger(0);
@@ -73,8 +74,7 @@ public class ServerDB{
         _usernamesIds.put(username,userID);
         _numOfMsgsSentByUser.put(userID,0);
         _usernamesAwaitingMsgs.put(userID, new LinkedBlockingQueue<>());
-//        _usernamesAwaitingPublicMsgs.put(userID, new LinkedBlockingQueue<>());
-//        _usernamePassword.put(username,password);
+        _registeredUsers.add(username);
         _followings.put(userID,new ConcurrentSkipListSet());
         _followers.put(userID,new ConcurrentSkipListSet<>());
         return userID;
@@ -124,7 +124,7 @@ public class ServerDB{
 
     public String getRegisteredUsers() {
         StringBuilder ansBuilder = new StringBuilder();
-        for (String currUser : _usernamesIds.keySet())
+        for (String currUser : _registeredUsers)
             ansBuilder.append(currUser + " ");
         String tmp = ansBuilder.toString().trim();
         int numOfUsers = 0;                 // count number of spaces this way
