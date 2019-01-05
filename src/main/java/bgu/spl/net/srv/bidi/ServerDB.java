@@ -31,6 +31,8 @@ public class ServerDB{
 
     private AtomicInteger _newestId;
 
+    private ConcurrentSkipListSet<String> _loggedInUsers;
+
     public ServerDB()
     {
         _usernamesAwaitingMsgs = new ConcurrentHashMap<>();
@@ -42,6 +44,7 @@ public class ServerDB{
         _serverDatabaseID = new ConcurrentHashMap<>();
         _numOfMsgsSentByUser = new ConcurrentHashMap<>();
         _newestId = new AtomicInteger(0);
+        _loggedInUsers = new ConcurrentSkipListSet<>();
     }
 
     public int getId(String username)
@@ -54,7 +57,10 @@ public class ServerDB{
 
     public int register(int serverId, String username, String password)
     {
-        if (_usernamePassword.containsKey(username))
+//        if (_usernamePassword.containsKey(username))
+//            return -1;
+
+        if (_usernamePassword.putIfAbsent(username,password) != null)
             return -1;
 
         int lastKnown = _newestId.get();
@@ -68,7 +74,7 @@ public class ServerDB{
         _numOfMsgsSentByUser.put(userID,0);
         _usernamesAwaitingMsgs.put(userID, new LinkedBlockingQueue<>());
 //        _usernamesAwaitingPublicMsgs.put(userID, new LinkedBlockingQueue<>());
-        _usernamePassword.put(username,password);
+//        _usernamePassword.put(username,password);
         _followings.put(userID,new ConcurrentSkipListSet());
         _followers.put(userID,new ConcurrentSkipListSet<>());
         return userID;
@@ -79,8 +85,11 @@ public class ServerDB{
         if (_usernamePassword.containsKey(username)){
             if (_usernamePassword.get(username).equals(password)){
                 int dbID = _usernamesIds.get(username);
-                _serverDatabaseID.put(serverId,dbID);
-                return dbID;
+                _serverDatabaseID.remove(dbID,-2);
+                if (_loggedInUsers.add(username)) {
+                    _serverDatabaseID.putIfAbsent(serverId, dbID);
+                    return dbID;
+                }
             }
         }
         return -1;
@@ -89,6 +98,7 @@ public class ServerDB{
     public void disconnect(int serverID, String username){
       //  _usernamesIds.put(username, -2);
         _serverDatabaseID.remove(serverID);
+        _loggedInUsers.remove(username);
     }
 
     public boolean checkFollowAndFollow (int user, String follow)

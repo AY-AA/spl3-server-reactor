@@ -1,4 +1,4 @@
-package bgu.spl.net.impl;
+package bgu.spl.net.impl.BGSServer;
 
 import bgu.spl.net.api.bidi.bidiMessageEncoderDecoder;
 import bgu.spl.net.api.bidi.bidiMessagingProtocolImpl;
@@ -8,9 +8,14 @@ import bgu.spl.net.srv.bidi.ServerDB;
 public class TPCMain {
 
     public static void main(String[] args) {
-
         ServerDB _database = new ServerDB();
-        int port =  Integer.parseInt(args[0]);
+//        int port = 0;
+//        if (args.length > 0) {
+//            port = Integer.parseInt(args[0]);
+//        }
+                int port =  7777;
+//        int numOfThreads = 10;
+
 
         Server.threadPerClient(
                 port, //port
