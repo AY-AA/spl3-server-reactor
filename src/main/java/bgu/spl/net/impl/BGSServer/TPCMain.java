@@ -9,12 +9,11 @@ public class TPCMain {
 
     public static void main(String[] args) {
         ServerDB _database = new ServerDB();
-        int port = 0;
-        if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-        }
-//                int port =  7777;
-//        int numOfThreads = 10;
+//        int port = 0;
+//        if (args.length > 0) {
+//            port = Integer.parseInt(args[0]);
+//        }
+                int port =  7777;
 
 
         Server.threadPerClient(

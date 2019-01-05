@@ -85,7 +85,7 @@ public class ServerDB{
         if (_usernamePassword.containsKey(username)){
             if (_usernamePassword.get(username).equals(password)){
                 int dbID = _usernamesIds.get(username);
-                _serverDatabaseID.remove(dbID,-2);
+                _serverDatabaseID.remove(serverId,-2);
                 if (_loggedInUsers.add(username)) {
                     _serverDatabaseID.putIfAbsent(serverId, dbID);
                     return dbID;
